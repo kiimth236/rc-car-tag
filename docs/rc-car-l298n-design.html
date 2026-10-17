@@ -119,7 +119,7 @@ pre{background:var(--part);border:1px solid var(--line);border-radius:8px;paddin
   <div class="sum"><b>요약</b> — 부품마다 파일을 나누고, <code>main.cpp</code>는 순서대로 부르기만 합니다. 각 파일은 다른 파일 안을 몰라도 쓸 수 있게 짧은 함수 몇 개만 밖으로 내놓습니다.</div>
   <div class="tw"><table>
     <tr><th>파일</th><th>하는 일</th><th>밖에서 쓰는 함수 (예)</th></tr>
-    <tr><td><code>include/config.h</code></td><td>핀 번호, 기본 설정값, 팀 표시 숫자</td><td>—</td></tr>
+    <tr><td><code>lib/rcar_hw/src/rcar_config.h</code></td><td>핀 번호, 기본 설정값 (점검 프로그램과 본 프로그램이 함께 씀). 팀 표시 숫자는 <code>protocol.h</code></td><td>—</td></tr>
     <tr><td><code>settings</code></td><td>NVS에서 차 번호·역할·보정값 읽기/쓰기</td><td><code>settings::load()</code>, <code>settings::get()</code></td></tr>
     <tr><td><code>motor</code></td><td>L298N 모터 1개: 듀티(−255~255), 급정지, 힘 빼기, 방향 반전</td><td><code>Motor::set(int)</code>, <code>brake()</code>, <code>coast()</code></td></tr>
     <tr><td><code>drive</code></td><td>조종 입력 → 왼/오 바퀴. 부드러운 가속, 배터리 보정, 최소 듀티, 전진 제한</td><td><code>drive::command(throttle, steer)</code>, <code>drive::update()</code>, <code>drive::stopNow()</code>, <code>drive::lock(ms)</code></td></tr>
@@ -136,7 +136,9 @@ pre{background:var(--part);border:1px solid var(--line);border-radius:8px;paddin
     <li>코어는 이 PC의 <b>Arduino-ESP32 2.0.17</b> (PlatformIO <code>espressif32@7.1.3</code>). PWM은 <code>ledcSetup / ledcAttachPin / ledcWrite</code>.</li>
     <li>ESP-NOW 받기 콜백은 무선 태스크(코어 0)에서 돌므로 <b>짧게 큐에 넣기만</b> 하고, 처리는 <code>loop()</code>(코어 1)에서.</li>
     <li>점검 프로그램 <code>src/tests/car1_test.cpp</code>는 L298N판으로 고쳐서(STBY 제거, 1kHz, 홀 센서 시험 추가) 계속 <code>[env:car1_test]</code>로 빌드.</li>
-    <li>Dabble은 <code>DabbleESP32</code> 라이브러리를 씁니다 (이 코어에서 컴파일되는지 구현 첫 단계에서 확인).</li>
+    <li>Dabble은 <code>DabbleESP32</code> <b>1.5.1</b>을 씁니다. 최신 1.6.x는 코어 3.x 전용 함수(<code>ledcAttachChannel</code>)를 써서 이 코어(2.0.17)에서 컴파일되지 않습니다 (2026-10-17 확인).</li>
+    <li>순수 로직(주행 계산 · 배터리 · 홀 · 메시지 · 게임 · LED 색)은 <code>lib/rcar_logic</code>에 두고 <code>pio test -e logic_test</code>로 ESP32 위에서 시험합니다 (테스트 63개).</li>
+    <li>조종 끊김 정지는 <code>Dabble.isAppConnected()</code>가 false가 되면 동작합니다. "0.5초 동안 새 명령 없음"을 따로 잴 수 있는지는 Dabble이 값을 계속 보내는지에 달려 있어, 실물 시험(11장 4번)에서 앱을 끈 뒤 멈출 때까지 걸린 시간을 재서 여기에 적습니다.</li>
   </ul>
 </section>
 

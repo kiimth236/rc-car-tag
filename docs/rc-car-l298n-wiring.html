@@ -337,6 +337,7 @@ svg .dot{stroke:var(--card);stroke-width:1.5}
   <label class="chk"><input type="checkbox" data-k="s11d"><span>바퀴를 공중에 띄워 둘 받침대가 있다 (첫 모터 시험용)</span></label>
   <label class="chk"><input type="checkbox" data-k="s11e"><span>스위치 ON → ESP32 LED 켜짐, L298N이나 선에서 뜨거운 곳·타는 냄새 없음</span></label>
   <div class="box info"><b>펌웨어를 올릴 때:</b> 스위치 OFF → <b>P5 뽑기</b> → USB 연결 → 업로드 → (모터 시험 시) 스위치 ON. USB가 ESP32를, 배터리가 모터를 맡습니다. GND(P6)가 이어져 있어서 신호는 그대로 통합니다.</div>
+  <div class="box ok"><b>✔ 점검 프로그램 순서 (car1_test v2.0):</b> <code>i</code> 설정 보기 → <code>p</code> 배선 확인 → <code>m</code> 모터 방향 → <code>n</code> 최소 듀티 → <code>d</code> 주행 데모 → <code>s</code> 전압 강하 → (도주차) <code>g</code> 홀 측정 → 자석 5cm에서 <code>k</code> → <code>r 번호 역할</code> (예: <code>r 1 chaser</code>, <code>r 2 runner</code>). 그다음 본 프로그램을 올립니다.</div>
 </section>
 
 <section id="pins">

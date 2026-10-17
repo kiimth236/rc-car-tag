@@ -1,6 +1,7 @@
 /*
- * RC카 본 프로그램 — 1단계: Dabble 조종 주행 (게임 · 무선은 Task 10)
+ * RC카 본 프로그램 — Dabble 조종 + ESP-NOW 술래잡기
  * 차 번호 · 역할 · 보정값은 점검 프로그램(car1_test)의 r · m · n · c · k 로 먼저 저장하세요.
+ * 도주차는 자석이 없는 곳에서 켜세요 (켤 때 1초 동안 홀 센서 기준값을 잽니다).
  */
 #include <Arduino.h>
 #include <esp_system.h>
@@ -9,8 +10,11 @@
 #include "ble_control.h"
 #include "drive.h"
 #include "drive_math.h"
+#include "game.h"
+#include "hall_detector.h"
 #include "led_patterns.h"
 #include "motor_l298n.h"
+#include "radio.h"
 #include "rcar_config.h"
 #include "rgb_led.h"
 #include "settings.h"
@@ -25,6 +29,10 @@ static float sonarHist[3] = {-1, -1, -1};
 static uint8_t sonarIdx = 0;
 static float frontCm = -1;
 static uint32_t nextControl = 0, nextSonar = 0, nextBattery = 0, nextLed = 0, nextLog = 0;
+static rcar::HallDetector hall;
+static rcar::Game* game = nullptr;   // 차 번호가 정해졌을 때만 만듦
+static bool radioOk = false;
+static uint32_t nextHall = 0;
 
 static bool due(uint32_t now, uint32_t& next, uint32_t period) {
   if ((int32_t)(now - next) < 0) return false;
@@ -61,13 +69,42 @@ void setup() {
   snprintf(name, sizeof name, "RCAR-%u", S.carId);
   bleBegin(name);
   Serial.printf("BLE 이름: %s\n", name);
+
+  if (S.role == rcar::Role::Runner) {
+    hall.setThreshold(S.hallThresholdMv);
+    float sum = 0;
+    for (int i = 0; i < 50; i++) { sum += hallReadMv(); delay(20); }  // 1초 평균 (자석 없는 곳에서 켜기)
+    hall.setBaseline(sum / 50);
+    Serial.printf("홀 기준값 %.1f mV · 잡힘 기준 %.1f mV\n", hall.baseline(), hall.threshold());
+  }
+  if (S.carId >= 1 && S.carId <= 4) {
+    radioOk = radioBegin();
+    game = new rcar::Game(S.role, S.carId);
+    Serial.printf("ESP-NOW %s\n", radioOk ? "준비됨" : "시작 실패!");
+  }
 }
 
 void loop() {
   uint32_t now = millis();
   PadInput pad = blePoll();
 
-  if (due(now, nextBattery, 100)) battery.update(batteryPinVolts() * S.vbatK, now);
+  rcar::Message m;
+  while (radioOk && radioReceive(m)) {
+    if (game) game->onMessage(m, now);
+  }
+  if (game && pad.startEdge) game->onStartPressed(now);
+
+  if (due(now, nextBattery, 100)) {
+    battery.update(batteryPinVolts() * S.vbatK, now);
+    if (game) game->setBatteryDeciV((uint8_t)constrain((int)(battery.filtered() * 10.0f + 0.5f), 0, 255));
+  }
+
+  if (game && S.role == rcar::Role::Runner && due(now, nextHall, 10)) {
+    if (hall.update(hallReadMv(), game->hallArmed())) {
+      game->onHallTriggered(now);
+      Serial.printf("[잡힘] 변화량 %.1f mV\n", hall.delta());
+    }
+  }
 
   if (S.role == rcar::Role::Chaser && due(now, nextSonar, cfg::SONAR_PERIOD_MS)) {
     sonarHist[sonarIdx] = sonarReadCm();
@@ -75,19 +112,32 @@ void loop() {
     frontCm = rcar::median3Distance(sonarHist[0], sonarHist[1], sonarHist[2]);
   }
 
+  if (game) {
+    game->tick(now);
+    while (game->popOutgoing(m)) {
+      if (radioOk) radioSend(m);
+    }
+    if (game->takeBrake()) drive.brakeNow(now);
+  }
+
   if (due(now, nextControl, cfg::CONTROL_PERIOD_MS)) {
-    bool enabled = pad.connected && battery.state() != rcar::BatteryState::Cutoff;
+    bool enabled = pad.connected && battery.state() != rcar::BatteryState::Cutoff &&
+                   (game ? game->motorsEnabled(now) : true);
     drive.command(pad.throttle, pad.steer);
     drive.update(now, battery.filtered(), S.role == rcar::Role::Chaser ? frontCm : -1.0f, enabled);
   }
 
   if (due(now, nextLed, 20)) {
-    rcar::LedPattern p = pad.connected ? rcar::LedPattern::RoleSolid : rcar::LedPattern::IdleBlink;
-    ledWrite(rcar::patternColor(p, S.role, S.carId, 0, battery.state(), now, cfg::LED_LEVEL));
+    rcar::LedPattern p = game ? game->led(now)
+                              : (pad.connected ? rcar::LedPattern::RoleSolid : rcar::LedPattern::IdleBlink);
+    uint32_t cd = game ? game->countdownMsLeft(now) : 0;
+    ledWrite(rcar::patternColor(p, S.role, S.carId, cd, battery.state(), now, cfg::LED_LEVEL));
   }
 
   if (due(now, nextLog, 1000)) {
-    Serial.printf("BLE %s · 배터리 %.2fV (%d) · 앞 %.1fcm · 입력 %.2f/%.2f\n", pad.connected ? "연결" : "대기",
-                  battery.filtered(), (int)battery.state(), frontCm, pad.throttle, pad.steer);
+    Serial.printf("BLE %s · 배터리 %.2fV (%d) · 단계 %d · 판 %u · 잡힘 %d · 앞 %.1fcm · 홀Δ %.1fmV\n",
+                  pad.connected ? "연결" : "대기", battery.filtered(), (int)battery.state(),
+                  game ? (int)game->phase() : -1, game ? game->round() : 0, game ? (int)game->caught() : 0,
+                  frontCm, hall.delta());
   }
 }

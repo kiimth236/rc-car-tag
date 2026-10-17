@@ -228,9 +228,68 @@ void test_ignores_own_messages() {
   TEST_ASSERT_EQUAL(Phase::Idle, r.phase());
 }
 
+// 도주차를 판 1 "게임 중"으로 만듦 (추격차 상태 알림을 now 에 한 번)
+static Game playingRunner(uint32_t now) {
+  Game r(Role::Runner, 2);
+  Message s = makeMessage(MsgType::Start, 1, 1);
+  s.role = (uint8_t)Role::Chaser; s.ms = 0;
+  r.onMessage(s, now);
+  r.tick(now);
+  return r;
+}
+void test_runner_over_returns_idle_when_chaser_lost() {
+  Game r = playingRunner(0);
+  r.onMessage(status(1, Role::Chaser, Phase::Over, 1), 100);
+  TEST_ASSERT_EQUAL(Phase::Over, r.phase());
+  r.tick(2050);
+  TEST_ASSERT_EQUAL(Phase::Over, r.phase());
+  r.tick(2100);
+  TEST_ASSERT_EQUAL(Phase::Idle, r.phase());
+}
+void test_runner_missed_start_joins_countdown_from_status() {
+  Game r = playingRunner(0);
+  r.onHallTriggered(10);
+  TEST_ASSERT_TRUE(r.caught());
+  Message cs = status(1, Role::Chaser, Phase::Countdown, 2);  // START 는 못 받고 상태 알림만 받음
+  cs.ms = 2500;
+  r.onMessage(cs, 500);
+  TEST_ASSERT_EQUAL(Phase::Countdown, r.phase());
+  TEST_ASSERT_EQUAL_UINT16(2, r.round());
+  TEST_ASSERT_FALSE(r.caught());
+  Message later = status(1, Role::Chaser, Phase::Countdown, 2);  // 추격차가 계속 보임
+  r.onMessage(later, 2500);
+  r.tick(3000);
+  TEST_ASSERT_EQUAL(Phase::Playing, r.phase());
+}
+void test_runner_other_round_playing_goes_idle() {
+  Game r = playingRunner(0);
+  r.onHallTriggered(10);
+  drain(r, MsgType::Caught);  // 잡힌 순간 보낸 첫 CAUGHT 는 정상
+  r.onMessage(status(1, Role::Chaser, Phase::Playing, 2), 500);
+  TEST_ASSERT_EQUAL(Phase::Idle, r.phase());
+  TEST_ASSERT_FALSE(r.caught());
+  int n = 0;
+  for (uint32_t t = 510; t <= 800; t += 10) { r.tick(t); n += drain(r, MsgType::Caught); }
+  TEST_ASSERT_EQUAL_INT(0, n);  // 지난 판 CAUGHT 를 계속 보내지 않음
+}
+void test_runner_follows_chaser_idle() {
+  Game r = playingRunner(0);
+  r.onHallTriggered(10);
+  drain(r, MsgType::Caught);  // 잡힌 순간 보낸 첫 CAUGHT 는 정상
+  r.onMessage(status(1, Role::Chaser, Phase::Idle, 1), 500);
+  TEST_ASSERT_EQUAL(Phase::Idle, r.phase());
+  int n = 0;
+  for (uint32_t t = 510; t <= 800; t += 10) { r.tick(t); n += drain(r, MsgType::Caught); }
+  TEST_ASSERT_EQUAL_INT(0, n);
+}
+
 void setup() {
   delay(2000);
   UNITY_BEGIN();
+  RUN_TEST(test_runner_over_returns_idle_when_chaser_lost);
+  RUN_TEST(test_runner_missed_start_joins_countdown_from_status);
+  RUN_TEST(test_runner_other_round_playing_goes_idle);
+  RUN_TEST(test_runner_follows_chaser_idle);
   RUN_TEST(test_idle_allows_driving);
   RUN_TEST(test_runner_ignores_start_button);
   RUN_TEST(test_start_countdown_then_playing);

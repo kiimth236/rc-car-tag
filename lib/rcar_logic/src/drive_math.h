@@ -12,7 +12,7 @@ void mixTank(float throttle, float steer, float& left, float& right);
 // 명령(−1~1) → 듀티. |cmd| < 0.02 는 0, 그 밖은 minDuty ~ maxDuty 사이로
 int commandToDuty(float cmd, int minDuty, int maxDuty);
 
-// 현재 듀티를 목표 쪽으로 maxStep 만큼만 움직임. 방향이 바뀔 때는 먼저 0까지
+// 현재 듀티를 목표 쪽으로 maxStep 만큼만 움직임. 방향이 바뀔 때는 먼저 0까지. 목표 0(멈춤)은 바로 0
 int rampStep(int current, int target, int maxStep);
 
 // 전진 제한: distCm ≤ stopCm 이면 0, ≤ slowCm 이면 × slowFactor. 후진·미검출(distCm < 0)은 그대로

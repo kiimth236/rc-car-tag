@@ -138,7 +138,7 @@ pre{background:var(--part);border:1px solid var(--line);border-radius:8px;paddin
     <li>점검 프로그램 <code>src/tests/car1_test.cpp</code>는 L298N판으로 고쳐서(STBY 제거, 1kHz, 홀 센서 시험 추가) 계속 <code>[env:car1_test]</code>로 빌드.</li>
     <li>Dabble은 <code>DabbleESP32</code> <b>1.5.1</b>을 씁니다. 최신 1.6.x는 코어 3.x 전용 함수(<code>ledcAttachChannel</code>)를 써서 이 코어(2.0.17)에서 컴파일되지 않습니다 (2026-10-17 확인).</li>
     <li>순수 로직(주행 계산 · 배터리 · 홀 · 메시지 · 게임 · LED 색)은 <code>lib/rcar_logic</code>에 두고 <code>pio test -e logic_test</code>로 ESP32 위에서 시험합니다 (테스트 63개).</li>
-    <li>조종 끊김 정지는 <code>Dabble.isAppConnected()</code>가 false가 되면 동작합니다. "0.5초 동안 새 명령 없음"을 따로 잴 수 있는지는 Dabble이 값을 계속 보내는지에 달려 있어, 실물 시험(11장 4번)에서 앱을 끈 뒤 멈출 때까지 걸린 시간을 재서 여기에 적습니다.</li>
+    <li>조종 끊김 정지: Dabble 1.5.1의 <code>isAppConnected()</code>는 한 번 true가 되면 내려가지 않아 쓰지 않습니다. 대신 라이브러리의 BLE 연결 플래그(<code>isDeviceConnected</code>)와 <b>0.5초 동안 받은 입력 없음</b>(<code>PAD_RX_TIMEOUT_MS</code>)으로 판단하고(<code>LinkWatch</code>), 끊기면 BLE 광고를 다시 시작해 폰이 다시 붙을 수 있게 합니다. Dabble 앱이 조이스틱을 가만히 둘 때 값을 보내지 않아 차가 끊기면 이 값을 0으로 바꿔 BLE 연결만 봅니다 — 실물 시험(11장 4번)에서 확인합니다.</li>
   </ul>
 </section>
 

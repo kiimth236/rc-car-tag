@@ -26,6 +26,9 @@ constexpr float SLOW_CM = 10.0f, STOP_CM = 3.0f, SLOW_FACTOR = 0.4f;  // 추격�
 constexpr float STEER_GAIN = 0.6f;
 constexpr bool PAD_INVERT_Y = false;  // 조이스틱 위가 후진이면 true
 constexpr uint32_t BRAKE_HOLD_MS = 150;
+// 폰 입력이 이 시간 동안 안 오면 정지 (설계서 6장 "0.5초 동안 새 명령 없음").
+// Dabble 앱이 조이스틱을 가만히 둘 때 값을 보내지 않아 차가 뚝뚝 끊기면 0 으로 (BLE 연결만 확인).
+constexpr uint32_t PAD_RX_TIMEOUT_MS = 500;
 // 배터리
 constexpr float VBAT_K_DEFAULT = (100000.0f + 33000.0f) / 33000.0f;  // 약 4.03
 // 초음파

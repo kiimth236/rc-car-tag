@@ -29,7 +29,7 @@ int commandToDuty(float cmd, int minDuty, int maxDuty) {
 }
 
 int rampStep(int current, int target, int maxStep) {
-  if (maxStep <= 0) return target;
+  if (maxStep <= 0 || target == 0) return target;  // 멈춤 명령은 바로 (가속만 부드럽게)
   if (current != 0 && target != 0 && ((current > 0) != (target > 0))) target = 0;  // 반전은 0을 거쳐서
   int diff = target - current;
   if (diff > maxStep) diff = maxStep;

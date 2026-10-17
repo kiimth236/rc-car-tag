@@ -63,9 +63,16 @@ void test_median3_normal() { TEST_ASSERT_FLOAT_WITHIN(1e-4f, 20.0f, median3Dista
 void test_median3_one_missing() { TEST_ASSERT_FLOAT_WITHIN(1e-4f, 20.0f, median3Distance(-1.0f, 10.0f, 20.0f)); }
 void test_median3_two_missing() { TEST_ASSERT_FLOAT_WITHIN(1e-4f, -1.0f, median3Distance(-1.0f, 10.0f, -1.0f)); }
 
+// 멈춤 명령(목표 0)은 기다리지 않고 바로 0 — 전진 제한 3cm · 잡힘 · 끊김 때 바로 섬
+void test_ramp_zero_target_stops_immediately() {
+  TEST_ASSERT_EQUAL_INT(0, rampStep(150, 0, 13));
+  TEST_ASSERT_EQUAL_INT(0, rampStep(-150, 0, 13));
+}
+
 void setup() {
   delay(2000);
   UNITY_BEGIN();
+  RUN_TEST(test_ramp_zero_target_stops_immediately);
   RUN_TEST(test_max_duty_full_battery);
   RUN_TEST(test_max_duty_nominal_is_full);
   RUN_TEST(test_max_duty_no_battery_is_full);

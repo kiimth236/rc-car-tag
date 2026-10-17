@@ -61,9 +61,32 @@ void test_switch_off_never_latches() {
   TEST_ASSERT_EQUAL(BatteryState::NoBattery, b.state());
 }
 
+void test_switch_on_from_usb_never_latches() {
+  BatteryMonitor b;  // USB 만 연결된 상태에서 배터리 스위치 ON (7.0V)
+  uint32_t t = 0;
+  for (int i = 0; i < 200; i++, t += 100) b.update(0.0f, t);
+  for (int i = 0; i < 100; i++, t += 100) {
+    b.update(7.0f, t);
+    TEST_ASSERT_NOT_EQUAL(BatteryState::Cutoff, b.state());
+  }
+  TEST_ASSERT_EQUAL(BatteryState::Ok, b.state());
+}
+void test_switch_off_clears_latch() {
+  BatteryMonitor b(kInstant);
+  b.update(6.3f, 0);
+  b.update(6.3f, 3000);
+  TEST_ASSERT_EQUAL(BatteryState::Cutoff, b.state());
+  b.update(0.0f, 3100);  // 스위치 OFF (USB 로 ESP32 는 계속 켜져 있음)
+  TEST_ASSERT_EQUAL(BatteryState::NoBattery, b.state());
+  b.update(7.6f, 3200);  // 충전한 배터리로 다시 ON
+  TEST_ASSERT_EQUAL(BatteryState::Ok, b.state());
+}
+
 void setup() {
   delay(2000);
   UNITY_BEGIN();
+  RUN_TEST(test_switch_on_from_usb_never_latches);
+  RUN_TEST(test_switch_off_clears_latch);
   RUN_TEST(test_first_sample_sets_filtered);
   RUN_TEST(test_warn_and_hysteresis);
   RUN_TEST(test_cutoff_after_hold_and_latches);

@@ -1,0 +1,767 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>L298N 배선 가이드</title>
+<style>
+:root{--bg:#fffdf5;--card:#fff;--ink:#1f2328;--muted:#5d636b;--line:#d9d4c3;--y:#ffd84d;--accent:#b45309;
+  --warnbg:#fdecea;--warnln:#d92d20;--okbg:#e9f9ee;--okln:#16a34a;--infobg:#eef4ff;--infoln:#2563eb;--part:#fff8d6;
+  --wbat:#d92d20;--w5v:#f08a00;--wgnd:#1f2328;--thin:#b91c1c;--bb:#f3efe4;--bbhole:#cfc8b6;--svgtext:#1f2328;--svgmuted:#5d636b}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17191c;--card:#22252a;--ink:#f1f3f5;--muted:#a8b0b9;--line:#3a3f46;--accent:#f5b041;
+  --warnbg:#3a1d1a;--okbg:#14301f;--infobg:#172338;--part:#3a3416;--wgnd:#e5e7eb;--bb:#2c2f34;--bbhole:#4a4f57;--svgtext:#f1f3f5;--svgmuted:#a8b0b9}}
+:root[data-theme="dark"]{--bg:#17191c;--card:#22252a;--ink:#f1f3f5;--muted:#a8b0b9;--line:#3a3f46;--accent:#f5b041;
+  --warnbg:#3a1d1a;--okbg:#14301f;--infobg:#172338;--part:#3a3416;--wgnd:#e5e7eb;--bb:#2c2f34;--bbhole:#4a4f57;--svgtext:#f1f3f5;--svgmuted:#a8b0b9}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.7 "Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
+.in{max-width:1080px;margin:0 auto;padding:0 16px}
+header{background:var(--y);color:#1f2328;padding:28px 0 22px;border-bottom:3px solid #1f2328}
+header h1{margin:0 0 6px;font-size:28px}
+header p{margin:0}
+.bar{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line)}
+.bar .in{display:flex;gap:12px;align-items:center;padding-top:8px;padding-bottom:8px;flex-wrap:wrap}
+.pg{flex:1;min-width:120px;height:10px;background:var(--line);border-radius:6px;overflow:hidden}
+.pg i{display:block;height:100%;width:0;background:var(--okln);transition:width .3s}
+button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:4px 12px;cursor:pointer}
+main{padding:20px 0 60px}
+section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:18px 0}
+h2{margin:0 0 10px;font-size:22px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+h2 .no{display:inline-grid;place-items:center;min-width:36px;height:36px;border-radius:50%;background:#1f2328;color:#ffd84d;font-size:17px}
+h3{margin:18px 0 8px;font-size:17px}
+.sum{background:var(--part);border-left:5px solid var(--y);border-radius:8px;padding:10px 14px;margin:6px 0 14px}
+.sum b:first-child{color:var(--accent)}
+.box{border-radius:8px;padding:10px 14px;margin:12px 0;border-left:5px solid}
+.warn{background:var(--warnbg);border-color:var(--warnln)}
+.ok{background:var(--okbg);border-color:var(--okln)}
+.info{background:var(--infobg);border-color:var(--infoln)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.chip{background:var(--part);border:1px solid var(--line);border-radius:999px;padding:2px 10px;font-size:14px}
+table{border-collapse:collapse;width:100%;font-size:15px;margin:8px 0}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{background:var(--part)}
+.tw{overflow-x:auto}
+code{background:var(--part);border-radius:4px;padding:0 4px;font-size:.92em}
+.fig{margin:12px 0;border:1px solid var(--line);border-radius:10px;background:var(--card);padding:8px;overflow-x:auto}
+.fig svg{display:block;width:100%;height:auto;min-width:640px}
+.fig figcaption{font-size:14px;color:var(--muted);padding:4px 6px 0}
+.chk{display:flex;gap:10px;align-items:flex-start;padding:6px 0;border-top:1px dashed var(--line)}
+.chk:first-of-type{border-top:0}
+.chk input{width:20px;height:20px;margin-top:4px;flex:none;accent-color:var(--okln)}
+.chk.done span{color:var(--muted);text-decoration:line-through}
+.toc{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px;padding:0;list-style:none;margin:8px 0 0}
+.toc a{display:block;padding:6px 10px;border:1px solid var(--line);border-radius:8px;color:var(--ink);text-decoration:none;background:var(--card)}
+.toc a:hover{border-color:var(--accent)}
+.sw{display:inline-block;width:26px;height:6px;border-radius:3px;vertical-align:middle;margin-right:6px}
+ol.steps li{margin:4px 0}
+details{margin:8px 0}
+summary{cursor:pointer;color:var(--accent);font-weight:600}
+/* SVG */
+svg text{fill:var(--svgtext);font-family:inherit}
+svg .mut{fill:var(--svgmuted)}
+svg .w{fill:none;stroke-linecap:round;stroke-linejoin:round}
+svg .bat{stroke:var(--wbat)} svg .v5{stroke:var(--w5v)} svg .gnd{stroke:var(--wgnd)} svg .thin{stroke:var(--thin)}
+svg .bb{fill:var(--bb);stroke:var(--bbhole)}
+svg .dot{stroke:var(--card);stroke-width:1.5}
+@media (max-width:600px){header h1{font-size:22px}section{padding:16px}h2{font-size:19px}}
+</style>
+</head>
+<body>
+<header><div class="in">
+  <h1>🔌 RC카 L298N 배선 가이드</h1>
+  <p>ESP32 DevKitC V4 (WROOM-32D · CP2102) + <b>L298N</b> + TT모터 2개 + 18650 ×2 기준. 기본 배선은 <b>4대 모두 같고</b>, 잡힘 판정용으로 <b>도주차에는 KY-024 홀 센서, 추격차에는 자석</b>이 더해집니다 (11단계). 그림을 보고 <b>한 단계씩</b> 연결하고, 단계마다 <b>✔ 확인</b>을 통과한 뒤 다음으로 넘어가세요.</p>
+</div></header>
+
+<div class="bar"><div class="in">
+  <span id="pgtxt">0 / 0 확인</span><div class="pg"><i id="pgbar"></i></div>
+  <button id="reset" type="button">체크 지우기</button>
+</div></div>
+
+<main class="in">
+
+<section id="top">
+  <h2>한눈에 보기</h2>
+  <div class="sum"><b>요약</b> — 배터리 → 퓨즈 → 스위치 → <b>L298N</b>(모터 전원). L298N이 만든 <b>5V</b>가 브레드보드 레일을 거쳐 <b>ESP32</b>와 초음파 센서를 켭니다. ESP32는 신호선 6개로 L298N에 "얼마나 빨리, 어느 방향으로"를 알려 줍니다. 벅 컨버터는 쓰지 않습니다. <b>잡힘 판정</b>은 추격차 앞의 <b>자석</b>이 도주차 뒤의 <b>KY-024 홀 센서</b>에 3~5cm로 다가갔을 때이고, <b>초음파</b>는 추격차가 앞에 부딪히지 않게 막는 데 씁니다.</div>
+  <figure class="fig"><svg id="fig0" viewBox="0 0 1000 330" role="img" aria-label="전체 구성도"></svg>
+    <figcaption>그림 0. 전체 구성 — 굵은 선은 전류가 큰 전원선, 가는 선은 신호선</figcaption></figure>
+  <ul class="toc">
+    <li><a href="#s0"><b>0</b> 준비물 · 규칙</a></li>
+    <li><a href="#s1"><b>1</b> L298N 점퍼 맞추기</a></li>
+    <li><a href="#s2"><b>2</b> 배터리 확인</a></li>
+    <li><a href="#s3"><b>3</b> 모터 노이즈 캡 · 모터선</a></li>
+    <li><a href="#s4"><b>4</b> 배터리 전원선 (P1 · P2)</a></li>
+    <li><a href="#s5"><b>5</b> 5V 레일 + 470µF (P3 · P4)</a></li>
+    <li><a href="#s6"><b>6</b> ESP32 전원 (P5 · P6)</a></li>
+    <li><a href="#s7"><b>7</b> 배터리 측정 분압 (S13)</a></li>
+    <li><a href="#s8"><b>8</b> 모터 신호선 6개 (S1~S6)</a></li>
+    <li><a href="#s9"><b>9</b> 초음파 센서 — 충돌 방지 (S8 · S9)</a></li>
+    <li><a href="#s10"><b>10</b> 3색 LED 모듈 (S10~S12)</a></li>
+    <li><a href="#s11m"><b>11</b> 잡힘 센서: KY-024 · 자석</a></li>
+    <li><a href="#s11"><b>12</b> 최종 점검 · 다음 단계</a></li>
+    <li><a href="#pins"><b>표</b> 전체 연결표</a></li>
+    <li><a href="#trouble"><b>?</b> 문제 해결</a></li>
+  </ul>
+</section>
+
+<section id="s0">
+  <h2><span class="no">0</span>준비물 · 규칙</h2>
+  <div class="sum"><b>요약</b> — 1대에 필요한 부품을 모으고, 아래 <b>규칙 4개</b>를 먼저 읽으세요. 규칙만 지키면 부품이 망가질 일은 거의 없습니다.</div>
+  <h3>1대 부품 (4대면 ×4)</h3>
+  <div class="tw"><table>
+    <tr><th>부품</th><th>개수</th><th>메모</th></tr>
+    <tr><td>ESP32 DevKitC V4 (WROOM-32D, CP2102)</td><td>1</td><td>핀 38개 (한쪽 19개)</td></tr>
+    <tr><td>L298N 모터 드라이버 모듈</td><td>1</td><td>빨간 기판 + 검은 방열판. 5V 레귤레이터 내장</td></tr>
+    <tr><td>TT 기어모터 + 65mm 바퀴</td><td>2</td><td>앞바퀴 구동</td></tr>
+    <tr><td>볼캐스터</td><td>1</td><td>뒤쪽 가운데</td></tr>
+    <tr><td>18650 배터리 + 2구 직렬 홀더</td><td>2 / 1</td><td>보호회로 있는 셀. 직렬 = 7.4V</td></tr>
+    <tr><td>퓨즈 3A + 퓨즈 홀더</td><td>1</td><td>합선 시 배터리·선을 지킴</td></tr>
+    <tr><td>전원 스위치 (DC 3A 이상)</td><td>1</td><td>작은 슬라이드 스위치(0.5A)는 안 됨</td></tr>
+    <tr><td>미니 브레드보드</td><td>1</td><td>5V/GND 레일 + 작은 저항들만 꽂음</td></tr>
+    <tr><td>전해 커패시터 470µF (10V 이상)</td><td>1</td><td>다리가 긴 쪽 = +, 줄무늬 쪽 = −</td></tr>
+    <tr><td>세라믹 커패시터 0.1µF ("104")</td><td>7</td><td>모터당 3개 + 배터리 측정 1개. 방향 없음</td></tr>
+    <tr><td>저항</td><td>4</td><td>100kΩ, 33kΩ (배터리 측정) / 1kΩ, 2kΩ (초음파 ECHO)</td></tr>
+    <tr><td>HC-SR04 초음파 센서</td><td>1</td><td>5V로 켬. 추격차의 충돌 방지용 (도주차도 달아 두지만 쏘지 않음)</td></tr>
+    <tr><td>KY-024 홀 센서 모듈</td><td>도주차만 1</td><td>잡힘 감지. 3.3V로 켬 (4대 기준 3개 + 예비 2개)</td></tr>
+    <tr><td>네오디뮴 원형 자석 지름 20mm × 두께 10mm (N42 이상)</td><td>추격차만 1</td><td>추격차 앞범퍼. 예비 1~2개</td></tr>
+    <tr><td>3색 LED 모듈 (저항 내장, 4핀)</td><td>1</td><td>외부 저항 필요 없음</td></tr>
+    <tr><td>22AWG 전선 (빨강·검정)</td><td>약 1m</td><td>배터리·모터 등 큰 전류</td></tr>
+    <tr><td>점퍼선 암-암 / 수-암 / 수-수</td><td>각 10</td><td>신호선·5V 줄</td></tr>
+  </table></div>
+  <h3>꼭 지킬 규칙</h3>
+  <div class="box warn">
+    <b>① 선을 꽂거나 뺄 때는 항상 스위치 OFF.</b> 켜진 채로 만지면 합선 한 번에 부품이 망가질 수 있습니다.<br>
+    <b>② USB 케이블을 ESP32에 꽂을 때는 P5 선(5V 레일 → ESP32 5V 핀)을 뽑습니다.</b> PC의 5V와 L298N의 5V가 부딪치지 않게 하기 위해서입니다. GND 선(P6)은 그대로 둬도 됩니다.<br>
+    <b>③ 7.4V(배터리 전압)는 ESP32 핀에 절대 직접 닿으면 안 됩니다.</b> ESP32 핀은 3.3V까지만 견딥니다. 배터리 측정은 반드시 분압 저항을 거칩니다 (7단계).<br>
+    <b>④ 그림에서 점(●)이 있는 곳만 연결입니다.</b> 선이 반원(⌒)으로 넘어가거나 점 없이 겹치는 곳은 연결이 아닙니다.
+  </div>
+  <div class="box info"><b>알아 두면 좋은 말</b><br>
+    <b>GND</b> = 전기가 돌아가는 길(0V). 모든 부품의 GND가 서로 이어져 있어야 신호가 통합니다.<br>
+    <b>PWM</b> = 아주 빠르게 켰다 껐다 해서 "평균 힘"을 조절하는 방법. 켜진 비율(듀티)이 클수록 모터가 빨리 돕니다.<br>
+    <b>분압</b> = 저항 2개로 전압을 일정 비율로 낮추는 방법. 예: 100kΩ + 33kΩ이면 전압이 약 ¼로 줄어듭니다.<br>
+    <b>레일</b> = 브레드보드 가장자리의 긴 줄. 한 줄 전체가 안에서 이어져 있어서, 5V·GND를 여러 부품에 나눠 줄 때 씁니다.
+  </div>
+  <label class="chk"><input type="checkbox" data-k="s0a"><span>부품을 1대분씩 나눠 담았다</span></label>
+  <label class="chk"><input type="checkbox" data-k="s0b"><span>규칙 ①~④를 읽었다</span></label>
+</section>
+
+<section id="s1">
+  <h2><span class="no">1</span>L298N 점퍼 맞추기</h2>
+  <div class="sum"><b>요약</b> — <b>ENA·ENB 점퍼 캡 2개는 뺍니다.</b> <b>5V 점퍼는 끼운 채로 둡니다.</b> 이것만 하면 됩니다.</div>
+  <div class="chips"><span class="chip">L298N ×1</span><span class="chip">핀셋 또는 손톱</span></div>
+  <figure class="fig"><svg id="figA" viewBox="0 0 640 330" role="img" aria-label="L298N 점퍼 위치"></svg>
+    <figcaption>그림 A. L298N 위에서 본 모습 — 점퍼 3개의 위치와 상태</figcaption></figure>
+  <ol class="steps">
+    <li><b>ENA 위의 검은 캡</b>을 위로 뽑습니다. 캡이 끼워져 있으면 모터가 늘 최고 속도로 돌아서 ESP32가 속도를 조절할 수 없습니다.</li>
+    <li><b>ENB 위의 캡</b>도 똑같이 뽑습니다. 뽑은 캡은 잃어버리지 않게 봉투에 보관하세요.</li>
+    <li>전원 단자 옆 <b>5V 점퍼</b>(보드에 "5V-EN" 또는 "12V"라고 인쇄된 곳)는 <b>그대로 둡니다.</b> 이 점퍼가 있어야 L298N이 배터리 전압으로 5V를 만들어 줍니다.</li>
+  </ol>
+  <div class="box info">보드마다 인쇄 위치가 조금씩 다릅니다. 그림의 위치보다 <b>보드에 인쇄된 글자</b>를 기준으로 찾으세요.</div>
+  <label class="chk"><input type="checkbox" data-k="s1a"><span>ENA·ENB 캡 2개를 뺐다 (핀 2개씩이 드러나 보인다)</span></label>
+  <label class="chk"><input type="checkbox" data-k="s1b"><span>5V 점퍼는 끼워져 있다</span></label>
+</section>
+
+<section id="s2">
+  <h2><span class="no">2</span>배터리 확인</h2>
+  <div class="sum"><b>요약</b> — 홀더에 18650 2개를 넣고 멀티미터로 <b>7.4~8.4V</b>가 나오는지 봅니다. 6V보다 낮으면 먼저 충전하세요.</div>
+  <div class="chips"><span class="chip">18650 ×2</span><span class="chip">2구 홀더</span><span class="chip">멀티미터</span></div>
+  <ol class="steps">
+    <li>홀더 안의 <b>+ / − 표시</b>대로 셀을 넣습니다 (셀의 볼록한 쪽 = +).</li>
+    <li>멀티미터를 <b>DC 20V</b>(또는 자동)로 놓고, 빨간 침을 홀더 빨간 선에, 검은 침을 검은 선에 댑니다.</li>
+  </ol>
+  <div class="box ok"><b>✔ 기대값:</b> 완충 8.2~8.4V · 보통 7.4~8.0V. 값 앞에 "−"가 붙으면 침을 반대로 댄 것입니다 (셀을 반대로 넣었는지도 확인).</div>
+  <label class="chk"><input type="checkbox" data-k="s2a"><span>배터리 전압: 7.4~8.4V가 나왔다</span></label>
+</section>
+
+<section id="s3">
+  <h2><span class="no">3</span>모터 노이즈 캡 · 모터선</h2>
+  <div class="sum"><b>요약</b> — 모터마다 0.1µF 3개를 납땜하고, <b>왼쪽 모터 → OUT1·OUT2</b>, <b>오른쪽 모터 → OUT3·OUT4</b> 나사 단자에 물립니다. 도는 방향이 반대여도 나중에 펌웨어에서 고칠 수 있으니 극성은 신경 쓰지 않아도 됩니다.</div>
+  <div class="chips"><span class="chip">TT모터 ×2</span><span class="chip">0.1µF ×6</span><span class="chip">22AWG 빨강·검정</span><span class="chip">인두 · 납</span><span class="chip">작은 일자 드라이버</span></div>
+  <figure class="fig"><svg id="fig2" viewBox="0 0 1000 340" role="img" aria-label="모터 배선"></svg>
+    <figcaption>그림 2. 위에서 내려다본 모습 (차 앞쪽이 위). 모터마다 노이즈 캡 3개 + 선 2가닥</figcaption></figure>
+  <ol class="steps">
+    <li>모터 단자 2개에 22AWG 선을 하나씩 납땜합니다 (약 15cm).</li>
+    <li><b>노이즈 캡 3개:</b> ① 단자1 ↔ 단자2 ② 단자1 ↔ 모터 금속 케이스 ③ 단자2 ↔ 케이스. 케이스는 사포로 살짝 긁어야 납이 붙습니다.</li>
+    <li>왼쪽 모터 선을 L298N <b>OUT1·OUT2</b>에, 오른쪽 모터 선을 <b>OUT3·OUT4</b>에 넣고 나사를 조입니다.</li>
+  </ol>
+  <div class="box info"><b>왜 캡이 필요한가요?</b> 모터 안에서는 작은 불꽃이 튀며 전기 잡음이 생깁니다. 이 잡음이 ESP32까지 오면 갑자기 재부팅되거나 센서가 이상한 값을 냅니다. 0.1µF가 잡음을 그 자리에서 없애 줍니다.</div>
+  <label class="chk"><input type="checkbox" data-k="s3a"><span>모터 2개 모두 캡 3개씩 납땜했다</span></label>
+  <label class="chk"><input type="checkbox" data-k="s3b"><span>선을 살짝 당겨도 나사 단자에서 빠지지 않는다</span></label>
+  <label class="chk"><input type="checkbox" data-k="s3c"><span>멀티미터 통전 모드: 모터 단자1 ↔ 단자2가 수 Ω(완전 단락 0Ω 아님)</span></label>
+</section>
+
+<section id="s4">
+  <h2><span class="no">4</span>배터리 전원선 (P1 · P2)</h2>
+  <div class="sum"><b>요약</b> — 배터리 <b>+ → 퓨즈 → 스위치 → L298N +12V</b>, 배터리 <b>− → L298N GND</b>. 켜면 L298N의 빨간 LED가 켜지고 <b>+5V 단자에서 약 5V</b>가 나와야 합니다.</div>
+  <div class="chips"><span class="chip">퓨즈 3A + 홀더</span><span class="chip">스위치</span><span class="chip">22AWG 빨강·검정</span><span class="chip">열수축 튜브</span></div>
+  <figure class="fig"><svg id="fig1" viewBox="0 0 1070 490" role="img" aria-label="전원 배선"></svg>
+    <figcaption>그림 1. 전원 배선 (4~7단계를 이 그림 하나로 봅니다). 빨강 = 배터리 7.4V, 주황 = 5V, 검정 = GND, 가는 빨강 = 배터리 측정선</figcaption></figure>
+  <ol class="steps">
+    <li><b>P1:</b> 홀더 빨간 선 → 퓨즈 홀더 → 스위치 → L298N <b>+12V</b> 단자. 이음매는 납땜 후 열수축 튜브로 감쌉니다. (이름은 12V지만 7.4V를 넣는 게 맞습니다.)</li>
+    <li><b>P2:</b> 홀더 검은 선 → L298N <b>GND</b> 단자.</li>
+    <li>스위치를 켜기 <b>전에</b> 아래 합선 검사를 먼저 합니다.</li>
+  </ol>
+  <div class="box warn"><b>⚠ 켜기 전 합선 검사:</b> 스위치를 ON에 두되 <b>퓨즈를 빼고</b>, 멀티미터 통전(삑) 모드로 L298N <b>+12V ↔ GND</b>를 잽니다. <b>계속 울리면 합선</b>이니 선을 다시 확인하세요. 울리지 않으면 퓨즈를 다시 끼웁니다.</div>
+  <div class="box ok"><b>✔ 첫 전원:</b> 스위치 ON → L298N 빨간 LED 켜짐 → 멀티미터로 <b>+5V ↔ GND = 4.8~5.2V</b>. 확인하면 바로 스위치 OFF.</div>
+  <label class="chk"><input type="checkbox" data-k="s4a"><span>합선 검사 통과 (+12V ↔ GND가 계속 울리지 않음)</span></label>
+  <label class="chk"><input type="checkbox" data-k="s4b"><span>스위치 ON → L298N LED 켜짐</span></label>
+  <label class="chk"><input type="checkbox" data-k="s4c"><span>+5V 단자: 4.8~5.2V → 스위치 OFF</span></label>
+</section>
+
+<section id="s5">
+  <h2><span class="no">5</span>5V 레일 + 470µF (P3 · P4)</h2>
+  <div class="sum"><b>요약</b> — L298N <b>+5V → 브레드보드 5V 레일</b>, L298N <b>GND → GND 레일</b>. 레일 사이에 <b>470µF</b>를 극성 맞춰 꽂습니다. (그림 1)</div>
+  <div class="chips"><span class="chip">미니 브레드보드</span><span class="chip">수-수 점퍼선 ×2</span><span class="chip">470µF ×1</span></div>
+  <ol class="steps">
+    <li><b>P3:</b> 수-수 점퍼선 한쪽 끝을 L298N <b>+5V</b> 나사 단자에 물리고, 다른 끝을 브레드보드 <b>5V 레일</b>(빨간 줄 표시)에 꽂습니다.</li>
+    <li><b>P4:</b> 같은 방법으로 L298N <b>GND</b> 단자 → <b>GND 레일</b>(파란 줄). GND 단자 하나에 배터리 −(P2)와 함께 2가닥이 들어갑니다. 이곳이 모든 GND가 모이는 <b>한 점</b>입니다.</li>
+    <li><b>470µF:</b> 긴 다리(+)는 5V 레일, 줄무늬 쪽 짧은 다리(−)는 GND 레일.</li>
+  </ol>
+  <div class="box warn"><b>⚠ 470µF를 거꾸로 꽂으면</b> 뜨거워지거나 터질 수 있습니다. 줄무늬(−) = GND를 꼭 확인하세요.</div>
+  <div class="box info"><b>왜 470µF?</b> L298N 안의 5V 레귤레이터는 작아서(최대 약 0.5A), ESP32가 무선으로 전파를 쏘거나 모터가 출발하는 순간 5V가 살짝 출렁입니다. 470µF가 작은 물탱크처럼 그 순간을 메워서 ESP32가 꺼지지 않게 해 줍니다.</div>
+  <div class="box ok"><b>✔ 확인:</b> 스위치 ON → 브레드보드 5V 레일 ↔ GND 레일 = 4.8~5.2V → OFF.</div>
+  <label class="chk"><input type="checkbox" data-k="s5a"><span>470µF 극성 확인 (줄무늬 = GND 레일)</span></label>
+  <label class="chk"><input type="checkbox" data-k="s5b"><span>레일 전압 4.8~5.2V</span></label>
+</section>
+
+<section id="s6">
+  <h2><span class="no">6</span>ESP32 전원 (P5 · P6)</h2>
+  <div class="sum"><b>요약</b> — <b>5V 레일 → ESP32 5V 핀</b>, <b>GND 레일 → ESP32 GND 핀</b>(왼쪽 줄, 13번 바로 위). USB는 빼고 작업합니다. 켜면 ESP32의 빨간 전원 LED가 켜집니다. (그림 1)</div>
+  <div class="chips"><span class="chip">수-암 점퍼선 ×2</span></div>
+  <ol class="steps">
+    <li><b>P6 (먼저):</b> GND 레일 → ESP32 <b>왼쪽 줄 GND</b> (USB 쪽에서 6번째 핀).</li>
+    <li><b>P5:</b> 5V 레일 → ESP32 <b>5V</b> (왼쪽 줄 맨 아래, USB 바로 옆).</li>
+  </ol>
+  <div class="box warn"><b>⚠ 3V3 핀과 헷갈리지 마세요.</b> 3V3는 왼쪽 줄 <b>맨 위</b>(안테나 쪽), 5V는 <b>맨 아래</b>(USB 쪽)입니다. 5V를 3V3 핀에 넣으면 ESP32가 망가집니다.</div>
+  <div class="box ok"><b>✔ 확인:</b> 스위치 ON → ESP32 빨간 LED 켜짐 → ESP32 <b>3V3 핀 ↔ GND = 3.2~3.4V</b> → OFF.</div>
+  <label class="chk"><input type="checkbox" data-k="s6a"><span>5V 선이 5V 핀(맨 아래)에 꽂혀 있다 — 3V3 아님</span></label>
+  <label class="chk"><input type="checkbox" data-k="s6b"><span>ESP32 LED 켜짐, 3V3 = 3.2~3.4V</span></label>
+  <label class="chk"><input type="checkbox" data-k="s6c"><span>"USB 꽂을 때 P5 뽑기"를 차에 메모해 붙였다</span></label>
+</section>
+
+<section id="s7">
+  <h2><span class="no">7</span>배터리 측정 분압 (S13)</h2>
+  <div class="sum"><b>요약</b> — 가는 선으로 배터리 전압을 브레드보드로 가져와 <b>100kΩ → (가운데) → 33kΩ → GND</b>로 낮추고, 가운데를 <b>GPIO34</b>에 잇습니다. 가운데 ↔ GND 사이에 <b>0.1µF</b>도 답니다. (그림 1)</div>
+  <div class="chips"><span class="chip">100kΩ (갈검노)</span><span class="chip">33kΩ (주주주)</span><span class="chip">0.1µF ×1</span><span class="chip">가는 선 또는 수-수 점퍼 (가)</span><span class="chip">수-암 점퍼 ×1</span></div>
+  <ol class="steps">
+    <li><b>(가) 측정선:</b> 가는 선 한쪽을 L298N <b>+12V</b> 나사 단자에 P1과 함께 물리고, 다른 쪽을 브레드보드의 빈 줄에 꽂습니다. 스위치 <b>뒤쪽</b>에서 따야 끄면 배터리가 새지 않습니다.</li>
+    <li>그 줄에서 <b>100kΩ</b> → 다음 줄(가운데)로.</li>
+    <li>가운데 줄에서 <b>33kΩ</b> → GND 레일. 같은 가운데 줄에서 <b>0.1µF</b> → GND 레일.</li>
+    <li>가운데 줄 → 수-암 점퍼 → ESP32 <b>GPIO34</b> (왼쪽 줄 위에서 5번째).</li>
+  </ol>
+  <div class="box info"><b>계산:</b> GPIO34 전압 = 배터리 × 33 ÷ (100 + 33) = 배터리 × 0.248. 완충 8.4V → <b>2.08V</b>로, ESP32가 정확히 잴 수 있는 범위(약 2.45V까지) 안에 들어옵니다.</div>
+  <div class="box ok"><b>✔ 확인:</b> 스위치 ON → <b>GPIO34 ↔ GND</b> 전압 ≈ 배터리 전압 × 0.248 (예: 배터리 7.8V → 약 1.93V). <b>2.5V보다 높으면 즉시 OFF</b> — 저항이 서로 바뀐 것입니다.</div>
+  <label class="chk"><input type="checkbox" data-k="s7a"><span>100kΩ가 배터리 쪽, 33kΩ가 GND 쪽이다</span></label>
+  <label class="chk"><input type="checkbox" data-k="s7b"><span>GPIO34 측정 전압 ≈ 배터리 × 0.248 (2.5V 미만)</span></label>
+</section>
+
+<section id="s8">
+  <h2><span class="no">8</span>모터 신호선 6개 (S1~S6)</h2>
+  <div class="sum"><b>요약</b> — 암-암 점퍼선 6개: <b>ENA←25 · IN1←26 · IN2←27 · IN3←32 · IN4←33 · ENB←13</b>. 전부 ESP32 왼쪽 줄입니다. 레벨 변환기는 필요 없습니다.</div>
+  <div class="chips"><span class="chip">암-암 점퍼선 ×6 (색 다르게)</span></div>
+  <figure class="fig"><svg id="fig3" viewBox="0 0 900 500" role="img" aria-label="신호선 배선"></svg>
+    <figcaption>그림 3. 신호선 — 그림의 선 색은 구분용입니다. 실제 점퍼선 색은 아무거나 써도 되지만, 4대 모두 같은 색으로 맞추면 점검이 쉽습니다.</figcaption></figure>
+  <div class="tw"><table>
+    <tr><th>번호</th><th>ESP32</th><th>L298N</th><th>하는 일</th></tr>
+    <tr><td><span class="sw" style="background:#db2777"></span>S1</td><td>GPIO25</td><td>ENA</td><td>왼쪽 모터 속도 (PWM)</td></tr>
+    <tr><td><span class="sw" style="background:#ca8a04"></span>S2</td><td>GPIO26</td><td>IN1</td><td>왼쪽 방향</td></tr>
+    <tr><td><span class="sw" style="background:#16a34a"></span>S3</td><td>GPIO27</td><td>IN2</td><td>왼쪽 방향</td></tr>
+    <tr><td><span class="sw" style="background:#7c3aed"></span>S4</td><td>GPIO13</td><td>ENB</td><td>오른쪽 모터 속도 (PWM)</td></tr>
+    <tr><td><span class="sw" style="background:#2563eb"></span>S5</td><td>GPIO32</td><td>IN3</td><td>오른쪽 방향</td></tr>
+    <tr><td><span class="sw" style="background:#0891b2"></span>S6</td><td>GPIO33</td><td>IN4</td><td>오른쪽 방향</td></tr>
+  </table></div>
+  <div class="box warn"><b>⚠ ENA·ENB 헤더는 핀이 2개씩</b> 있습니다 (캡을 뺀 자리). 둘 중 하나는 L298N 내부 5V이고, 다른 하나가 ENA/ENB 입력입니다. 보드마다 위치가 달라서 <b>멀티미터로 찾습니다</b>: 스위치 ON, 검은 침은 GND 단자, 빨간 침으로 두 핀을 하나씩 재서 <b>약 5V가 나오는 핀이 아닌 쪽</b>에 점퍼선을 꽂습니다 (찾은 뒤 스위치 OFF). 5V 핀에 꽂으면 속도 조절이 안 되고 ESP32 핀에 5V가 걸립니다.</div>
+  <div class="box info"><b>왜 바로 꽂아도 되나요?</b> ESP32는 3.3V 신호를 내보내고, L298N은 약 2.3V보다 높으면 "켜짐(HIGH)"으로 알아듣습니다. 그래서 전압 변환 없이 바로 이어도 됩니다.</div>
+  <label class="chk"><input type="checkbox" data-k="s8a"><span>6개 모두 표대로 꽂았다 (한 번 더 손가락으로 짚어 가며 확인)</span></label>
+  <label class="chk"><input type="checkbox" data-k="s8b"><span>ENA·ENB 선은 멀티미터로 찾은 "5V가 아닌 쪽" 핀에 꽂았다</span></label>
+</section>
+
+<section id="s9">
+  <h2><span class="no">9</span>초음파 센서 — 충돌 방지 (S8 · S9)</h2>
+  <div class="box info" style="margin-top:0"><b>초음파의 역할:</b> 잡힘 판정이 아니라 <b>추격차가 앞의 차·벽에 부딪히지 않게</b> 앞이 가까우면 속도를 줄이고 멈추는 데 씁니다. 실제로 쏘는 건 추격차뿐이지만, 역할을 바꿀 수 있게 <b>4대 모두 같은 배선</b>으로 달아 둡니다.</div>
+  <div class="sum"><b>요약</b> — <b>VCC → 5V 레일</b>, <b>GND → GND 레일</b>, <b>Trig → GPIO18</b>, <b>Echo → 1kΩ → (가운데) → GPIO19</b>, 가운데 → <b>2kΩ → GND 레일</b>.</div>
+  <div class="chips"><span class="chip">HC-SR04 ×1</span><span class="chip">1kΩ (갈검빨)</span><span class="chip">2kΩ (빨검빨)</span><span class="chip">수-암 점퍼 ×4~5</span></div>
+  <figure class="fig"><svg id="fig4" viewBox="0 0 1000 520" role="img" aria-label="초음파와 LED 배선"></svg>
+    <figcaption>그림 4. 초음파 센서와 LED 모듈 (9 · 10단계). 브레드보드는 그림 1과 같은 보드이며, 보기 쉽게 다른 자리에 그렸습니다.</figcaption></figure>
+  <div class="box info"><b>왜 Echo에만 저항?</b> 센서를 5V로 켜면 Echo 핀도 5V로 대답합니다. ESP32 핀은 3.3V까지라서 1kΩ·2kΩ로 5V × 2/3 ≈ <b>3.3V</b>로 낮춥니다. Trig는 ESP32 → 센서 방향이라 그대로 꽂아도 됩니다.</div>
+  <div class="box ok"><b>✔ 확인:</b> 스위치 OFF 상태로 멀티미터 저항 모드: <b>GPIO19 쪽 점퍼 끝 ↔ GND 레일 ≈ 1.2kΩ 안팎</b> (2kΩ와 1kΩ+센서가 겹쳐 보임). 0Ω이면 합선, 무한대면 2kΩ가 빠진 것입니다.</div>
+  <label class="chk"><input type="checkbox" data-k="s9a"><span>센서 VCC = 5V 레일, GND = GND 레일</span></label>
+  <label class="chk"><input type="checkbox" data-k="s9b"><span>Echo는 1kΩ·2kΩ를 거쳐 GPIO19로 간다 (직결 아님)</span></label>
+</section>
+
+<section id="s10">
+  <h2><span class="no">10</span>3색 LED 모듈 (S10~S12)</h2>
+  <div class="sum"><b>요약</b> — 암-암 점퍼선 4개: <b>R → GPIO21</b>, <b>G → GPIO22</b>, <b>B → GPIO23</b>, <b>− → ESP32 GND</b>(오른쪽 줄 맨 위). 모듈에 저항이 있어서 다른 부품은 필요 없습니다. (그림 4)</div>
+  <div class="chips"><span class="chip">LED 모듈 ×1</span><span class="chip">암-암 점퍼 ×4</span></div>
+  <div class="box warn"><b>⚠ 모듈마다 핀 순서가 다릅니다.</b> 그림은 한 예(− · R · G · B)일 뿐이니, 모듈 기판에 인쇄된 글자(R · G · B · −)를 보고 꽂으세요. 받았을 때 기판에 <b>작은 저항 3개</b>가 보이는지도 확인하세요 — 없으면 R에 220Ω, G·B에 100Ω를 하나씩 직렬로 넣어야 합니다.</div>
+  <label class="chk"><input type="checkbox" data-k="s10a"><span>모듈에 저항이 있는 것을 확인했다</span></label>
+  <label class="chk"><input type="checkbox" data-k="s10b"><span>인쇄된 글자대로 21(R) · 22(G) · 23(B) · GND(−) 연결</span></label>
+</section>
+
+<section id="s11m">
+  <h2><span class="no">11</span>잡힘 센서: KY-024 (도주차) · 자석 (추격차)</h2>
+  <div class="sum"><b>요약</b> — <b>도주차 3대</b>에는 뒤쪽 끝에 KY-024를 달고 <b>+ → 3V3</b>, <b>G → GND</b>, <b>A0 → VP(GPIO36)</b>로 연결합니다 (D0는 비움). <b>추격차</b>에는 앞범퍼 끝에 네오디뮴 자석(지름 20 × 두께 10mm)을 붙입니다. 추격차 자석이 도주차 센서에서 <b>3~5cm</b> 안에 들어오면 그 도주차가 잡힙니다.</div>
+  <div class="chips"><span class="chip">KY-024 ×1 (도주차만)</span><span class="chip">암-암 점퍼 ×3</span><span class="chip">네오디뮴 자석 20×10mm ×1 (추격차만)</span><span class="chip">양면테이프 · 글루건</span></div>
+  <figure class="fig"><svg id="fig6" viewBox="0 0 900 250" role="img" aria-label="자석과 센서 위치"></svg>
+    <figcaption>그림 6. 옆에서 본 모습 — 추격차 앞범퍼의 자석과 도주차 뒤쪽의 센서를 <b>같은 높이</b>로</figcaption></figure>
+  <figure class="fig"><svg id="fig5" viewBox="0 0 780 480" role="img" aria-label="KY-024 배선"></svg>
+    <figcaption>그림 5. 도주차의 KY-024 배선 — 선 3개, 전부 ESP32 왼쪽 줄 (3V3 · VP · GND)</figcaption></figure>
+  <h3>도주차 (역할을 "도주"로 정한 3대)</h3>
+  <ol class="steps">
+    <li><b>H1:</b> KY-024 <b>+</b> → ESP32 <b>3V3</b> (왼쪽 줄 맨 위). <b>5V가 아니라 3V3</b>입니다.</li>
+    <li><b>H2:</b> KY-024 <b>G</b> → ESP32 <b>GND</b>. 왼쪽 줄 GND에는 이미 P6이 꽂혀 있으니 <b>오른쪽 줄 가운데 GND</b>(21번과 19번 사이)를 씁니다.</li>
+    <li><b>H3:</b> KY-024 <b>A0</b> → ESP32 <b>VP</b> (= GPIO36, 왼쪽 줄 위에서 3번째).</li>
+    <li><b>D0</b>는 연결하지 않습니다.</li>
+    <li>모듈을 차 <b>뒤쪽 끝 가운데</b>에 붙이고, 검은 센서 칩(다리 3개)의 <b>글자가 있는 면이 차 뒤쪽을 향하게</b> 다리를 살짝 구부려 세웁니다. 모터(앞바퀴)에서 최대한 멀리 둡니다.</li>
+  </ol>
+  <h3>추격차 (역할을 "추격"으로 정한 1대)</h3>
+  <ol class="steps">
+    <li>자석의 <b>평평한 면이 앞을 향하게</b> 앞범퍼 끝 가운데에 붙입니다. 높이는 도주차 센서 칩의 높이와 같게 맞춥니다.</li>
+    <li>N극·S극은 상관없습니다 (펌웨어가 양쪽 다 감지).</li>
+    <li>추격차에는 KY-024를 달지 않습니다. 대신 초음파 센서(9단계)가 앞에 부딪히지 않게 막아 줍니다.</li>
+  </ol>
+  <div class="box warn"><b>⚠ KY-024를 5V에 연결하면 안 됩니다.</b> 출력(A0)이 3.3V를 넘어 ESP32 핀이 상할 수 있습니다.<br>
+    <b>⚠ 큰 네오디뮴 자석:</b> 다른 자석·쇠붙이에 붙을 때 손가락이 끼일 수 있고 쉽게 깨집니다. 하나씩 따로 보관하고, 폰·카드에서 멀리 두세요. ESP32·L298N에 바로 붙이지 마세요.</div>
+  <div class="box info"><b>원리:</b> KY-024 안의 홀 센서는 자석이 가까울수록 A0 전압이 약 1.65V(가운데)에서 위나 아래로 벌어집니다. 펌웨어가 "벌어진 정도"가 정해 둔 값(5cm일 때 값)을 50ms 동안 계속 넘으면 잡힘으로 봅니다. 정확한 기준은 자석이 도착하면 점검 프로그램으로 재서 정합니다. 모듈에 따라 핀 순서(A0 · G · + · D0)가 다를 수 있으니 기판 글자를 보세요.</div>
+  <div class="box ok"><b>✔ 확인 (도주차):</b> 스위치 ON → 멀티미터로 <b>A0 ↔ GND ≈ 1.5~1.8V</b> (자석 없을 때). 자석을 센서 칩에 가까이 대면 이 값이 위나 아래로 크게 움직입니다.</div>
+  <label class="chk"><input type="checkbox" data-k="s11ma"><span>도주차: KY-024 + 는 3V3, A0는 VP(GPIO36), D0는 비움</span></label>
+  <label class="chk"><input type="checkbox" data-k="s11mb"><span>도주차: 자석 없을 때 A0 ≈ 1.5~1.8V, 자석을 대면 값이 움직인다</span></label>
+  <label class="chk"><input type="checkbox" data-k="s11mc"><span>추격차: 자석을 앞범퍼 끝에, 도주차 센서와 같은 높이로 붙였다</span></label>
+</section>
+
+<section id="s11">
+  <h2><span class="no">12</span>최종 점검 · 다음 단계</h2>
+  <div class="sum"><b>요약</b> — 전원을 넣기 전 마지막으로 5가지를 확인합니다. 배선이 끝나면 <b>L298N용 점검 프로그램</b>으로 모터·센서를 하나씩 시험합니다 (펌웨어 준비 후).</div>
+  <label class="chk"><input type="checkbox" data-k="s11a"><span>통전 모드: 배터리 +12V ↔ GND, 5V 레일 ↔ GND가 계속 울리지 않는다</span></label>
+  <label class="chk"><input type="checkbox" data-k="s11b"><span>7.4V 선(빨강 굵은 선, 가는 측정선)이 ESP32 핀에 직접 닿는 곳이 없다</span></label>
+  <label class="chk"><input type="checkbox" data-k="s11c"><span>ENA·ENB 캡이 빠져 있다</span></label>
+  <label class="chk"><input type="checkbox" data-k="s11f"><span>도주차는 KY-024가 3V3에, 추격차는 자석이 앞범퍼에 있다</span></label>
+  <label class="chk"><input type="checkbox" data-k="s11d"><span>바퀴를 공중에 띄워 둘 받침대가 있다 (첫 모터 시험용)</span></label>
+  <label class="chk"><input type="checkbox" data-k="s11e"><span>스위치 ON → ESP32 LED 켜짐, L298N이나 선에서 뜨거운 곳·타는 냄새 없음</span></label>
+  <div class="box info"><b>펌웨어를 올릴 때:</b> 스위치 OFF → <b>P5 뽑기</b> → USB 연결 → 업로드 → (모터 시험 시) 스위치 ON. USB가 ESP32를, 배터리가 모터를 맡습니다. GND(P6)가 이어져 있어서 신호는 그대로 통합니다.</div>
+</section>
+
+<section id="pins">
+  <h2>전체 연결표</h2>
+  <div class="sum"><b>요약</b> — 이 표 하나가 4대 공통 정답입니다. 점검할 때 위에서부터 손가락으로 짚어 가며 확인하세요.</div>
+  <div class="tw"><table>
+    <tr><th>번호</th><th>시작</th><th>끝</th><th>선</th><th>단계</th></tr>
+    <tr><td>P1</td><td>배터리 + → 퓨즈 3A → 스위치</td><td>L298N +12V</td><td>22AWG 빨강</td><td>4</td></tr>
+    <tr><td>P2</td><td>배터리 −</td><td>L298N GND</td><td>22AWG 검정</td><td>4</td></tr>
+    <tr><td>M1</td><td>왼쪽 모터 (캡 3개)</td><td>L298N OUT1 · OUT2</td><td>22AWG</td><td>3</td></tr>
+    <tr><td>M2</td><td>오른쪽 모터 (캡 3개)</td><td>L298N OUT3 · OUT4</td><td>22AWG</td><td>3</td></tr>
+    <tr><td>P3</td><td>L298N +5V</td><td>브레드보드 5V 레일</td><td>수-수</td><td>5</td></tr>
+    <tr><td>P4</td><td>L298N GND</td><td>브레드보드 GND 레일</td><td>수-수</td><td>5</td></tr>
+    <tr><td>C1</td><td>5V 레일 (+)</td><td>GND 레일 (−)</td><td>470µF</td><td>5</td></tr>
+    <tr><td>P5</td><td>5V 레일</td><td>ESP32 5V ⚠USB 시 뽑기</td><td>수-암</td><td>6</td></tr>
+    <tr><td>P6</td><td>GND 레일</td><td>ESP32 GND (왼쪽 줄)</td><td>수-암</td><td>6</td></tr>
+    <tr><td>(가)</td><td>L298N +12V</td><td>브레드보드 → 100kΩ</td><td>가는 선</td><td>7</td></tr>
+    <tr><td>S13</td><td>100kΩ/33kΩ 가운데 (+0.1µF)</td><td>ESP32 GPIO34</td><td>수-암</td><td>7</td></tr>
+    <tr><td>S1</td><td>ESP32 GPIO25</td><td>L298N ENA</td><td>암-암</td><td>8</td></tr>
+    <tr><td>S2</td><td>ESP32 GPIO26</td><td>L298N IN1</td><td>암-암</td><td>8</td></tr>
+    <tr><td>S3</td><td>ESP32 GPIO27</td><td>L298N IN2</td><td>암-암</td><td>8</td></tr>
+    <tr><td>S4</td><td>ESP32 GPIO13</td><td>L298N ENB</td><td>암-암</td><td>8</td></tr>
+    <tr><td>S5</td><td>ESP32 GPIO32</td><td>L298N IN3</td><td>암-암</td><td>8</td></tr>
+    <tr><td>S6</td><td>ESP32 GPIO33</td><td>L298N IN4</td><td>암-암</td><td>8</td></tr>
+    <tr><td>S8</td><td>ESP32 GPIO18</td><td>초음파 Trig</td><td>수-암/암-암</td><td>9</td></tr>
+    <tr><td>S9</td><td>초음파 Echo → 1kΩ → 가운데 (2kΩ → GND)</td><td>ESP32 GPIO19</td><td>수-암</td><td>9</td></tr>
+    <tr><td>—</td><td>초음파 VCC / GND</td><td>5V 레일 / GND 레일</td><td>수-암</td><td>9</td></tr>
+    <tr><td>S10~S12</td><td>ESP32 GPIO21 · 22 · 23</td><td>LED 모듈 R · G · B</td><td>암-암</td><td>10</td></tr>
+    <tr><td>—</td><td>ESP32 GND (오른쪽 줄 맨 위)</td><td>LED 모듈 −</td><td>암-암</td><td>10</td></tr>
+    <tr><td>H1</td><td>ESP32 3V3 (도주차만)</td><td>KY-024 +</td><td>암-암</td><td>11</td></tr>
+    <tr><td>H2</td><td>ESP32 GND, 오른쪽 줄 가운데 (도주차만)</td><td>KY-024 G</td><td>암-암</td><td>11</td></tr>
+    <tr><td>H3</td><td>ESP32 VP = GPIO36 (도주차만)</td><td>KY-024 A0</td><td>암-암</td><td>11</td></tr>
+    <tr><td>—</td><td>자석 (추격차만)</td><td>앞범퍼 끝, 센서와 같은 높이</td><td>—</td><td>11</td></tr>
+  </table></div>
+  <p style="color:var(--muted);font-size:14px">비어 있는 핀: GPIO4 (예전 TB6612의 STBY 자리). 쓰지 않습니다.</p>
+  <figure class="fig"><svg id="figP" viewBox="0 0 700 520" role="img" aria-label="ESP32 핀 위치"></svg>
+    <figcaption>그림 P. ESP32 위에서 본 핀 위치 (안테나가 위, USB가 아래). 색 있는 핀만 씁니다. 3V3 · VP · 오른쪽 가운데 GND는 도주차만 씁니다.</figcaption></figure>
+</section>
+
+<section id="trouble">
+  <h2>문제 해결</h2>
+  <div class="sum"><b>요약</b> — 증상을 찾고 오른쪽 칸부터 확인하세요. 대부분 선 하나가 빠졌거나 점퍼 상태 문제입니다.</div>
+  <div class="tw"><table>
+    <tr><th>증상</th><th>먼저 볼 것</th></tr>
+    <tr><td>스위치를 켜도 L298N LED가 안 켜짐</td><td>퓨즈 끊어짐 · 스위치 납땜 · 배터리 방향 · 배터리 전압</td></tr>
+    <tr><td>L298N +5V 단자가 0V</td><td>5V 점퍼가 빠졌는지 (1단계)</td></tr>
+    <tr><td>ESP32 LED가 안 켜짐</td><td>P5가 5V 핀에 있는지 · P6 · 레일 전압</td></tr>
+    <tr><td>한쪽 모터만 안 돔</td><td>그쪽 EN 선이 5V 핀이 아닌 입력 핀에 있는지(5V 핀이면 늘 최고 속도) · OUT 단자 나사 · 모터 납땜</td></tr>
+    <tr><td>모터가 늘 최고 속도로만 돔</td><td>ENA/ENB 캡이 아직 끼워져 있음</td></tr>
+    <tr><td>모터가 반대로 돔</td><td>정상. 펌웨어 설정(방향 반전)으로 고치거나 OUT 단자 두 선을 바꿈</td></tr>
+    <tr><td>출발하거나 방향을 바꿀 때 ESP32가 재부팅</td><td>470µF 극성·위치 · 모터 노이즈 캡 · 배터리 잔량(7V 미만?) · 펌웨어의 부드러운 가속</td></tr>
+    <tr><td>L298N 방열판이 따뜻함</td><td>정상 (L298N은 원래 열이 남). 손을 3초도 못 댈 만큼 뜨거우면 끄고 모터가 막혀 있는지 확인</td></tr>
+    <tr><td>배터리 측정값이 이상함</td><td>100kΩ/33kΩ 위치 · (가) 선이 스위치 뒤에서 왔는지 · 0.1µF</td></tr>
+    <tr><td>초음파 거리가 항상 0 또는 안 나옴</td><td>VCC 5V · Trig/Echo가 바뀌었는지 · Echo 분압</td></tr>
+    <tr><td>KY-024 A0가 0V 또는 3.3V에 붙어 있음</td><td>+ / G가 바뀌었는지 · A0와 D0를 바꿔 꽂았는지 · 근처에 자석·모터가 있는지</td></tr>
+    <tr><td>자석을 가까이 대도 잡히지 않음</td><td>센서 칩 글자 면이 뒤를 향하는지 · 자석과 높이가 같은지 · "게임 중" 단계인지 (대기 중에는 판정 안 함)</td></tr>
+    <tr><td>멀리서도 잡힘 · 혼자 잡힘</td><td>잡힘 기준값이 너무 작음 (점검 프로그램으로 다시 측정) · 센서가 모터에 너무 가까움</td></tr>
+  </table></div>
+</section>
+
+<p style="color:var(--muted);font-size:13px;text-align:center">RC카 L298N 배선 가이드 · 2026-10-17 (KY-024 · 자석 추가) · 4대 공통 · 이 문서의 핀 번호는 펌웨어(<code>config.h</code>)와 같아야 합니다</p>
+</main>
+
+<script>
+(function(){
+const NS='http://www.w3.org/2000/svg';
+function el(tag,a,p){const e=document.createElementNS(NS,tag);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;}
+function tx(p,x,y,s,a){const t=el('text',Object.assign({x:x,y:y,'font-size':12},a||{}),p);t.textContent=s;return t;}
+function wire(p,d,cls,w,color){const a={d:d,class:'w '+(cls||''),'stroke-width':w||4};if(color)a.stroke=color;return el('path',a,p);}
+function dot(p,x,y,c){el('circle',{cx:x,cy:y,r:4.5,fill:c||'#1f2328',class:'dot'},p);}
+function tag(p,x,y,s,c){const w=s.length*7.2+14;el('rect',{x:x,y:y-11,width:w,height:20,rx:10,fill:c||'#fff8d6',stroke:'#b45309','stroke-width':1},p);tx(p,x+7,y+4,s,{'font-size':11,style:'fill:#1f2328'});return w;}
+
+/* ---------- 부품 그리기 ---------- */
+const L_PINS=['3V3','EN','VP','VN','34','35','32','33','25','26','27','14','12','GND','13','D2','D3','CMD','5V'];
+const R_PINS=['GND','23','22','TX','RX','21','GND','19','18','5','17','16','4','0','2','15','D1','D0','CLK'];
+function esp32(p,x,y,hl){
+  hl=hl||{};const g=el('g',{},p);
+  el('rect',{x:x,y:y,width:170,height:430,rx:8,fill:'#1b2a3a',stroke:'#0d1620','stroke-width':2},g);
+  el('rect',{x:x+48,y:y+8,width:74,height:110,rx:3,fill:'#c9ced6',stroke:'#8a919b'},g);
+  el('rect',{x:x+54,y:y+12,width:62,height:22,fill:'#9aa1ab'},g);
+  tx(g,x+85,y+70,'ESP32',{'text-anchor':'middle','font-size':12,'font-weight':700,style:'fill:#1f2328'});
+  tx(g,x+85,y+86,'WROOM-32D',{'text-anchor':'middle','font-size':9,style:'fill:#1f2328'});
+  tx(g,x+85,y+28,'안테나',{'text-anchor':'middle','font-size':9,style:'fill:#1f2328'});
+  el('rect',{x:x+62,y:y+418,width:46,height:24,rx:3,fill:'#c9ced6',stroke:'#8a919b'},g);
+  tx(g,x+85,y+434,'USB',{'text-anchor':'middle','font-size':10,'font-weight':700,style:'fill:#1f2328'});
+  el('circle',{cx:x+85,cy:y+396,r:4,fill:'#ef4444'},g);
+  const pos={};
+  for(let i=0;i<19;i++){
+    const py=y+40+i*20;
+    [['L',L_PINS[i],x+10,'start',x+20],['R',R_PINS[i],x+160,'end',x+150]].forEach(function(s){
+      const key=s[0]+i;const h=hl[key];
+      el('circle',{cx:s[2],cy:py,r:h?6:4,fill:h?h:'#d4a72c',stroke:h?'#fff':'#7a5b0c','stroke-width':h?2:1},g);
+      const lab=(/^\d+$/.test(s[1])?s[1]:s[1]);
+      tx(g,s[4],py+4,lab,{'text-anchor':s[3],'font-size':h?11:10,'font-weight':h?700:400,style:'fill:'+(h?'#fff':'#9fb0c3')});
+      pos[key]=[s[2],py];
+    });
+  }
+  return pos;
+}
+/* L298N: 300 x 220 */
+function l298n(p,x,y,o){
+  o=o||{};const g=el('g',{},p);
+  el('rect',{x:x,y:y,width:300,height:220,rx:6,fill:'#c62828',stroke:'#7f1414','stroke-width':2},g);
+  el('rect',{x:x+105,y:y+14,width:90,height:96,rx:3,fill:'#2b2b2b'},g);
+  for(let i=0;i<7;i++)el('rect',{x:x+111+i*12,y:y+18,width:6,height:88,fill:'#444'},g);
+  tx(g,x+150,y+128,'L298N',{'text-anchor':'middle','font-size':14,'font-weight':700,style:'fill:#fff'});
+  // 모터 단자
+  [[x,'OUT1','OUT2','start',x+38],[x+266,'OUT3','OUT4','end',x+262]].forEach(function(s){
+    el('rect',{x:s[0],y:y+88,width:34,height:84,rx:3,fill:'#1e66d0',stroke:'#0f3d80'},g);
+    [0,1].forEach(function(k){el('circle',{cx:s[0]+17,cy:y+110+k*40,r:8,fill:'#d6dbe2',stroke:'#555'},g);el('line',{x1:s[0]+11,y1:y+110+k*40,x2:s[0]+23,y2:y+110+k*40,stroke:'#555','stroke-width':2},g);});
+    tx(g,s[4],y+114,s[1],{'text-anchor':s[3],'font-size':10,style:'fill:#fff'});
+    tx(g,s[4],y+154,s[2],{'text-anchor':s[3],'font-size':10,style:'fill:#fff'});
+  });
+  // 전원 단자 3개
+  el('rect',{x:x+14,y:y+180,width:106,height:40,rx:3,fill:'#1e66d0',stroke:'#0f3d80'},g);
+  [['+12V',32],['GND',67],['+5V',102]].forEach(function(s){
+    el('circle',{cx:x+s[1],cy:y+200,r:9,fill:'#d6dbe2',stroke:'#555'},g);
+    el('line',{x1:x+s[1]-6,y1:y+200,x2:x+s[1]+6,y2:y+200,stroke:'#555','stroke-width':2},g);
+    tx(g,x+s[1],y+175,s[0],{'text-anchor':'middle','font-size':10,'font-weight':700,style:'fill:#fff'});
+  });
+  // 5V 점퍼
+  el('circle',{cx:x+86,cy:y+148,r:3,fill:'#d4a72c'},g);el('circle',{cx:x+100,cy:y+148,r:3,fill:'#d4a72c'},g);
+  if(o.jump5!==false)el('rect',{x:x+80,y:y+141,width:26,height:14,rx:2,fill:'#111'},g);
+  tx(g,x+93,y+136,'5V 점퍼',{'text-anchor':'middle','font-size':9,style:'fill:#fff'});
+  // 헤더
+  const names=['ENA','IN1','IN2','IN3','IN4','ENB'];const pos={};
+  names.forEach(function(n,i){
+    const px=x+155+i*25;
+    tx(g,px,y+178,n,{'text-anchor':'middle','font-size':9,'font-weight':700,style:'fill:#fff'});
+    if(n==='ENA'||n==='ENB'){
+      el('rect',{x:px-4,y:y+186,width:8,height:8,fill:'#d4a72c'},g);
+      if(o.capEN)el('rect',{x:px-7,y:y+183,width:14,height:30,rx:2,fill:'#111'},g);
+    }
+    el('rect',{x:px-4,y:y+202,width:8,height:8,fill:o.hl&&o.hl[n]?o.hl[n]:'#d4a72c'},g);
+    pos[n]=[px,y+220];
+  });
+  el('circle',{cx:x+118,cy:y+150,r:4,fill:o.ledOn?'#ff3b30':'#7a1c1c'},g);
+  pos.v12=[x+32,y+220];pos.gnd=[x+67,y+220];pos.v5=[x+102,y+220];
+  pos.out1=[x,y+110];pos.out2=[x,y+150];pos.out3=[x+300,y+110];pos.out4=[x+300,y+150];
+  pos.enaTop=[x+155,y+190];pos.enbTop=[x+280,y+190];pos.j5=[x+93,y+148];
+  return pos;
+}
+function motor(p,x,y,side,label){ // side: 'L' 바퀴가 왼쪽, 단자 오른쪽
+  const g=el('g',{},p);
+  el('rect',{x:x,y:y,width:150,height:70,rx:6,fill:'#f5c400',stroke:'#8a6d00','stroke-width':2},g);
+  const can=side==='L'?x+150:x-46;
+  el('rect',{x:can,y:y+12,width:46,height:46,rx:8,fill:'#c9ced6',stroke:'#6b7280'},g);
+  const wx=side==='L'?x-26:x+150;
+  el('rect',{x:wx,y:y-40,width:26,height:150,rx:8,fill:'#2b2b2b'},g);
+  tx(g,x+75,y+40,label,{'text-anchor':'middle','font-size':13,'font-weight':700,style:'fill:#1f2328'});
+  const tX=side==='L'?can+46:can;
+  el('rect',{x:side==='L'?tX:tX-6,y:y+16,width:6,height:8,fill:'#b0883a'},g);
+  el('rect',{x:side==='L'?tX:tX-6,y:y+46,width:6,height:8,fill:'#b0883a'},g);
+  return {t1:[side==='L'?tX+6:tX-6,y+20],t2:[side==='L'?tX+6:tX-6,y+50],can:[can+23,y+35]};
+}
+function resistor(p,x1,y1,x2,y2,label,bands){
+  const g=el('g',{},p);el('line',{x1:x1,y1:y1,x2:x2,y2:y2,stroke:'#8a919b','stroke-width':2},g);
+  const cx=(x1+x2)/2,cy=(y1+y2)/2,vert=Math.abs(y2-y1)>Math.abs(x2-x1);
+  const w=vert?14:40,h=vert?40:14;
+  el('rect',{x:cx-w/2,y:cy-h/2,width:w,height:h,rx:5,fill:'#e7d3a8',stroke:'#8a6d3b'},g);
+  (bands||[]).forEach(function(c,i){const o=-12+i*8;el('rect',vert?{x:cx-w/2,y:cy+o,width:w,height:4,fill:c}:{x:cx+o,y:cy-h/2,width:4,height:h,fill:c},g);});
+  if(label)tx(g,vert?cx-12:cx,vert?cy+4:cy-12,label,{'text-anchor':vert?'end':'middle','font-size':11,'font-weight':700});
+}
+function ceramic(p,x1,y1,x2,y2,label){
+  const g=el('g',{},p);el('line',{x1:x1,y1:y1,x2:x2,y2:y2,stroke:'#8a919b','stroke-width':2},g);
+  const cx=(x1+x2)/2,cy=(y1+y2)/2;el('circle',{cx:cx,cy:cy,r:8,fill:'#e8962e',stroke:'#8a4b0c'},g);
+  tx(g,cx,cy+3,'104',{'text-anchor':'middle','font-size':7,style:'fill:#1f2328'});
+  if(label)tx(g,cx+12,cy+4,label,{'font-size':10,class:'mut'});
+}
+function breadboard(p,x,y,w,h,gy,vy){
+  const g=el('g',{},p);el('rect',{x:x,y:y,width:w,height:h,rx:6,class:'bb','stroke-width':1.5},g);
+  for(let cx=x+14;cx<x+w-8;cx+=14)for(let cy=y+14;cy<gy-16;cy+=14)el('circle',{cx:cx,cy:cy,r:1.6,fill:'var(--bbhole)'},g);
+  el('line',{x1:x+10,y1:gy,x2:x+w-10,y2:gy,stroke:'#2563eb','stroke-width':3},g);
+  el('line',{x1:x+10,y1:vy,x2:x+w-10,y2:vy,stroke:'#d92d20','stroke-width':3},g);
+  tx(g,x+12,y+h-6,'브레드보드 — 위 파랑 줄 = GND 레일, 아래 빨강 줄 = 5V 레일',{'font-size':10,class:'mut'});
+}
+
+/* ---------- 그림 0: 전체 구성 ---------- */
+(function(){
+  const s=document.getElementById('fig0');
+  function box(x,y,w,h,t1,t2,fill){el('rect',{x:x,y:y,width:w,height:h,rx:10,fill:fill,stroke:'#1f2328','stroke-width':2},s);tx(s,x+w/2,y+h/2-(t2?4:-5),t1,{'text-anchor':'middle','font-size':15,'font-weight':700,style:'fill:#1f2328'});if(t2)tx(s,x+w/2,y+h/2+16,t2,{'text-anchor':'middle','font-size':11,style:'fill:#1f2328'});}
+  box(20,130,140,70,'18650 ×2','7.4V (6.0~8.4V)','#7dd3a8');
+  box(200,140,110,50,'퓨즈 3A','','#f3efe4');
+  box(340,140,110,50,'스위치','','#f3efe4');
+  box(500,110,190,110,'L298N','모터 드라이버 + 5V 레귤레이터','#f28b82');
+  box(780,20,190,60,'왼쪽 모터','OUT1 · OUT2','#f5c400');
+  box(780,100,190,60,'오른쪽 모터','OUT3 · OUT4','#f5c400');
+  box(500,262,190,60,'브레드보드 레일','5V · GND · 470µF','#f3efe4');
+  box(780,190,190,80,'ESP32','DevKitC V4','#9ec5fe');
+  box(780,286,190,40,'초음파 · LED · 홀 센서 · 배터리','','#e9d5ff');
+  wire(s,'M160 165 H200','bat',6);wire(s,'M310 165 H340','bat',6);wire(s,'M450 165 H500','bat',6);
+  wire(s,'M690 135 H735 V50 H780','bat',4);wire(s,'M690 150 H750 V130 H780','bat',4);
+  wire(s,'M560 220 V262','v5',5);
+  wire(s,'M690 292 H735 V230 H780','v5',4);
+  wire(s,'M780 215 H720 V190 H690','',2,'#7c3aed');
+  wire(s,'M690 305 H780','',2,'#7c3aed');
+  tx(s,180,128,'전원 (굵은 선)',{'font-size':12,'font-weight':700,style:'fill:#d92d20'});
+  tx(s,575,245,'5V',{'font-size':12,'font-weight':700,style:'fill:#f08a00'});
+  tx(s,700,184,'신호선 6개',{'font-size':11,'font-weight':700,style:'fill:#7c3aed'});
+  tx(s,700,58,'모터선',{'font-size':11,'font-weight':700,style:'fill:#d92d20'});
+  tx(s,20,240,'GND(−)는 모두 L298N GND 단자 한 점에 모입니다',{'font-size':12,class:'mut'});
+  tx(s,20,262,'벅 컨버터 없음 — ESP32 5V는 L298N이 만듭니다',{'font-size':12,class:'mut'});
+})();
+
+/* ---------- 그림 A: 점퍼 ---------- */
+(function(){
+  const s=document.getElementById('figA');
+  const P=l298n(s,170,50,{jump5:true,capEN:false,ledOn:false});
+  function call(x1,y1,x2,y2,t,c){wire(s,'M'+x1+' '+y1+' L'+x2+' '+y2,'',2,c);el('circle',{cx:x1,cy:y1,r:14,fill:'none',stroke:c,'stroke-width':3},s);tx(s,x2+(x2<x1?-4:4),y2+4,t,{'text-anchor':x2<x1?'end':'start','font-size':13,'font-weight':700,style:'fill:'+c});}
+  call(P.enaTop[0],P.enaTop[1]+8,120,300,'ENA 캡 빼기 ✂','#d92d20');
+  call(P.enbTop[0],P.enbTop[1]+8,520,300,'ENB 캡 빼기 ✂','#d92d20');
+  call(P.j5[0],P.j5[1],155,24,'5V 점퍼: 끼운 채로 ✔','#16a34a');
+  tx(s,420,30,'모터 단자(파랑)',{'text-anchor':'middle','font-size':11,class:'mut'});
+  tx(s,90,175,'OUT1·2 →',{'text-anchor':'end','font-size':11,class:'mut'});
+  tx(s,480,175,'← OUT3·4',{'font-size':11,class:'mut'});
+  tx(s,210,318,'전원 단자 3개',{'text-anchor':'middle','font-size':11,class:'mut'});
+})();
+
+/* ---------- 그림 1: 전원 ---------- */
+(function(){
+  const s=document.getElementById('fig1');
+  const P=l298n(s,360,30,{jump5:true,ledOn:true});
+  // 배터리
+  el('rect',{x:20,y:370,width:190,height:96,rx:8,fill:'#2b2b2b'},s);
+  [0,1].forEach(function(k){el('rect',{x:32,y:384+k*38,width:150,height:28,rx:12,fill:'#2f9e6b',stroke:'#14532d'},s);tx(s,107,403+k*38,'18650 3.7V',{'text-anchor':'middle','font-size':11,style:'fill:#fff'});});
+  tx(s,115,488,'배터리 2구 직렬 = 7.4V',{'text-anchor':'middle','font-size':11,class:'mut'});
+  tx(s,198,392,'+',{'font-size':14,'font-weight':700,style:'fill:#ff6b6b'});tx(s,198,446,'−',{'font-size':14,'font-weight':700,style:'fill:#fff'});
+  // P1
+  wire(s,'M210 400 H392 V250','bat',6);
+  el('rect',{x:228,y:390,width:40,height:20,rx:4,fill:'#f3efe4',stroke:'#8a6d3b'},s);el('line',{x1:232,y1:400,x2:264,y2:400,stroke:'#8a919b','stroke-width':2},s);
+  tx(s,248,383,'퓨즈 3A',{'text-anchor':'middle','font-size':11,'font-weight':700});
+  el('rect',{x:288,y:388,width:46,height:24,rx:4,fill:'#444'},s);el('rect',{x:300,y:380,width:10,height:14,rx:2,fill:'#bbb'},s);
+  tx(s,311,374,'스위치',{'text-anchor':'middle','font-size':11,'font-weight':700});
+  tx(s,398,330,'P1',{'font-size':12,'font-weight':700,style:'fill:#d92d20'});
+  // P2
+  wire(s,'M210 440 H421 V250','gnd',6);
+  tx(s,300,458,'P2',{'font-size':12,'font-weight':700});
+  // 측정선 (가)
+  wire(s,'M386 250 L350 290','thin',2);dot(s,386,250,'#b91c1c');tag(s,300,302,'(가) 측정선');
+  // 브레드보드
+  breadboard(s,500,290,360,170,395,420);
+  // P3, P4
+  wire(s,'M462 250 V420 H515','v5',4);dot(s,515,420,'#f08a00');
+  wire(s,'M433 250 V395 H455 a7 7 0 0 1 14 0 H515','gnd',4);dot(s,515,395,'#1f2328');
+  tx(s,470,345,'P3',{'font-size':12,'font-weight':700,style:'fill:#f08a00'});
+  tx(s,440,345,'P4',{'font-size':12,'font-weight':700});
+  // 분압
+  tag(s,530,330,'(가) →');dot(s,600,330,'#b91c1c');
+  resistor(s,600,330,700,330,'100kΩ',['#8b4513','#111','#f4c430']);
+  wire(s,'M700 330 H760','',3,'#8a919b');dot(s,720,330,'#7c3aed');dot(s,745,330,'#7c3aed');
+  resistor(s,720,330,720,395,'33kΩ',['#f08a00','#f08a00','#f08a00']);dot(s,720,395,'#1f2328');
+  ceramic(s,760,330,760,395,'0.1µF');dot(s,760,395,'#1f2328');
+  // 470uF
+  el('line',{x1:811,y1:372,x2:811,y2:395,stroke:'#8a919b','stroke-width':2},s);
+  el('line',{x1:827,y1:372,x2:827,y2:420,stroke:'#8a919b','stroke-width':2},s);
+  el('rect',{x:805,y:330,width:28,height:42,rx:6,fill:'#1e3a8a'},s);el('rect',{x:805,y:330,width:9,height:42,fill:'#cbd5e1'},s);
+  tx(s,809,354,'−',{'font-size':11,'font-weight':700,style:'fill:#1f2328'});
+  dot(s,811,395,'#1f2328');dot(s,827,420,'#f08a00');
+  tx(s,819,320,'470µF',{'text-anchor':'middle','font-size':11,'font-weight':700});
+  // ESP32
+  const E=esp32(s,880,20,{L4:'#7c3aed',L13:'#1f2328',L18:'#f08a00'});
+  wire(s,'M745 330 V140 H'+E.L4[0],'',3,'#7c3aed');
+  tx(s,752,180,'S13 → GPIO34',{'font-size':11,'font-weight':700,style:'fill:#7c3aed'});
+  wire(s,'M845 395 H866 V'+E.L13[1]+' H'+E.L13[0],'gnd',4);dot(s,845,395,'#1f2328');
+  wire(s,'M845 420 H'+E.L18[0],'v5',4);dot(s,845,420,'#f08a00');
+  tx(s,862,300,'P6',{'font-size':12,'font-weight':700,'text-anchor':'end'});
+  tx(s,872,478,'P5 ⚠USB 시 뽑기',{'text-anchor':'end','font-size':11,'font-weight':700,style:'fill:#f08a00'});
+  tx(s,360,22,'L298N (5V 점퍼 끼움)',{'font-size':11,class:'mut'});
+})();
+
+/* ---------- 그림 2: 모터 ---------- */
+(function(){
+  const s=document.getElementById('fig2');
+  const P=l298n(s,350,60,{jump5:true});
+  const A=motor(s,40,135,'L','왼쪽 모터');
+  const B=motor(s,810,135,'R','오른쪽 모터');
+  wire(s,'M'+A.t1[0]+' '+A.t1[1]+' H300 V'+P.out1[1]+' H'+P.out1[0],'bat',4);
+  wire(s,'M'+A.t2[0]+' '+A.t2[1]+' H285 V'+P.out2[1]+' H'+P.out2[0],'gnd',4);
+  wire(s,'M'+B.t1[0]+' '+B.t1[1]+' H700 V'+P.out3[1]+' H'+P.out3[0],'bat',4);
+  wire(s,'M'+B.t2[0]+' '+B.t2[1]+' H715 V'+P.out4[1]+' H'+P.out4[0],'gnd',4);
+  [A,B].forEach(function(M,i){
+    const x=M.t1[0]+(i?-14:14);
+    ceramic(s,x,M.t1[1],x,M.t2[1]);
+    el('path',{d:'M'+M.t1[0]+' '+M.t1[1]+' Q'+(M.can[0])+' '+(M.t1[1]-30)+' '+M.can[0]+' '+(M.can[1]-12),class:'w',stroke:'#8a919b','stroke-width':2},s);
+    el('path',{d:'M'+M.t2[0]+' '+M.t2[1]+' Q'+(M.can[0])+' '+(M.t2[1]+30)+' '+M.can[0]+' '+(M.can[1]+12),class:'w',stroke:'#8a919b','stroke-width':2},s);
+    el('circle',{cx:M.can[0],cy:M.t1[1]-22,r:7,fill:'#e8962e',stroke:'#8a4b0c'},s);
+    el('circle',{cx:M.can[0],cy:M.t2[1]+22,r:7,fill:'#e8962e',stroke:'#8a4b0c'},s);
+  });
+  tx(s,195,300,'캡 ①단자↔단자 ②③단자↔케이스',{'text-anchor':'middle','font-size':11,class:'mut'});
+  tx(s,805,300,'오른쪽도 똑같이 3개',{'text-anchor':'middle','font-size':11,class:'mut'});
+  wire(s,'M500 40 V12','',3,'#16a34a');el('path',{d:'M492 20 L500 6 L508 20 Z',fill:'#16a34a'},s);
+  tx(s,512,22,'차 앞쪽',{'font-size':12,'font-weight':700,style:'fill:#16a34a'});
+  tx(s,265,128,'M1',{'font-size':12,'font-weight':700});tx(s,735,128,'M2',{'font-size':12,'font-weight':700,'text-anchor':'end'});
+  tx(s,500,330,'선 색(빨강/검정)은 어느 쪽에 물려도 됩니다 — 방향은 펌웨어에서 맞춥니다',{'text-anchor':'middle','font-size':11,class:'mut'});
+})();
+
+/* ---------- 그림 3: 신호선 ---------- */
+(function(){
+  const s=document.getElementById('fig3');
+  const H={ENA:'#db2777',IN1:'#ca8a04',IN2:'#16a34a',IN3:'#2563eb',IN4:'#0891b2',ENB:'#7c3aed'};
+  const P=l298n(s,40,40,{jump5:true,hl:H});
+  const E=esp32(s,650,40,{L8:H.ENA,L9:H.IN1,L10:H.IN2,L6:H.IN3,L7:H.IN4,L14:H.ENB});
+  const map=[['ENA','L8','S1 · 25'],['IN1','L9','S2 · 26'],['IN2','L10','S3 · 27'],['IN3','L6','S5 · 32'],['IN4','L7','S6 · 33'],['ENB','L14','S4 · 13']];
+  map.forEach(function(m,i){
+    const a=P[m[0]],b=E[m[1]];
+    const d='M'+a[0]+' '+a[1]+' C'+a[0]+' '+(a[1]+150+i*12)+' '+(b[0]-200)+' '+b[1]+' '+b[0]+' '+b[1];
+    wire(s,d,'',4,H[m[0]]);
+    tx(s,b[0]-14,b[1]-5,m[2],{'text-anchor':'end','font-size':10,'font-weight':700,style:'fill:'+H[m[0]]});
+  });
+  tx(s,190,26,'ENA·ENB: 2개 핀 중 5V가 아닌 쪽에 꽂기 (8단계)',{'text-anchor':'middle','font-size':11,'font-weight':700,style:'fill:#d92d20'});
+  tx(s,40,470,'모든 선이 ESP32 왼쪽 줄로 갑니다. 암-암 점퍼선 6개.',{'font-size':12,class:'mut'});
+})();
+
+/* ---------- 그림 4: 센서 · LED ---------- */
+(function(){
+  const s=document.getElementById('fig4');
+  const LC={R:'#dc2626',G:'#16a34a',B:'#2563eb',T:'#0d9488',E:'#a16207'};
+  const E=esp32(s,40,40,{R0:'#1f2328',R1:LC.B,R2:LC.G,R5:LC.R,R7:LC.E,R8:LC.T});
+  // LED 모듈
+  el('rect',{x:420,y:40,width:150,height:110,rx:6,fill:'#111827'},s);
+  el('circle',{cx:510,cy:95,r:24,fill:'#f8fafc',opacity:.9},s);
+  tx(s,510,100,'RGB',{'text-anchor':'middle','font-size':11,'font-weight':700,style:'fill:#1f2328'});
+  const lp={};[['−',60],['R',82],['G',104],['B',126]].forEach(function(q){el('rect',{x:414,y:q[1]-4,width:10,height:8,fill:'#d4a72c'},s);tx(s,432,q[1]+4,q[0],{'font-size':11,'font-weight':700,style:'fill:#fff'});lp[q[0]]=[414,q[1]];});
+  tx(s,495,168,'LED 모듈 (핀 순서는 예시)',{'text-anchor':'middle','font-size':11,class:'mut'});
+  function cv(a,b,c){wire(s,'M'+a[0]+' '+a[1]+' C'+(a[0]+110)+' '+a[1]+' '+(b[0]-110)+' '+b[1]+' '+b[0]+' '+b[1],'',3.5,c);}
+  cv(E.R0,lp['−'],'var(--wgnd)');cv(E.R5,lp.R,LC.R);cv(E.R2,lp.G,LC.G);cv(E.R1,lp.B,LC.B);
+  tx(s,300,60,'GND → −',{'font-size':10,class:'mut'});
+  // 초음파
+  el('rect',{x:700,y:40,width:260,height:110,rx:6,fill:'#1d4ed8'},s);
+  [770,890].forEach(function(cx){el('circle',{cx:cx,cy:88,r:34,fill:'#cbd5e1',stroke:'#475569','stroke-width':3},s);el('circle',{cx:cx,cy:88,r:20,fill:'#64748b'},s);});
+  tx(s,830,62,'HC-SR04',{'text-anchor':'middle','font-size':11,'font-weight':700,style:'fill:#fff'});
+  const up={};[['VCC',770],['Trig',810],['Echo',850],['GND',890]].forEach(function(q){el('rect',{x:q[1]-4,y:146,width:8,height:12,fill:'#d4a72c'},s);tx(s,q[1],140,q[0],{'text-anchor':'middle','font-size':9,'font-weight':700,style:'fill:#fff'});up[q[0]]=[q[1],158];});
+  // 브레드보드
+  breadboard(s,560,260,420,230,420,450);
+  // Echo 분압
+  wire(s,'M850 158 V300','',3.5,LC.E);dot(s,850,300,LC.E);
+  resistor(s,850,300,760,300,'1kΩ',['#8b4513','#111','#dc2626']);
+  wire(s,'M760 300 H700','',3,'#8a919b');dot(s,730,300,LC.E);dot(s,705,300,LC.E);
+  resistor(s,730,300,730,420,'2kΩ',['#dc2626','#111','#dc2626']);dot(s,730,420,'#1f2328');
+  // VCC, GND
+  wire(s,'M770 158 V240 H640 V411 a9 9 0 0 1 0 18 V450','v5',3.5);dot(s,640,450,'#f08a00');
+  wire(s,'M890 158 V420','gnd',3.5);dot(s,890,420,'#1f2328');
+  // Trig, Echo → ESP32
+  wire(s,'M'+E.R8[0]+' '+E.R8[1]+' C380 '+E.R8[1]+' 700 240 810 200 L810 158','',3.5,LC.T);
+  wire(s,'M705 300 C560 300 400 '+E.R7[1]+' '+E.R7[0]+' '+E.R7[1],'',3.5,LC.E);
+  tx(s,240,E.R8[1]+16,'S8 Trig → 18',{'font-size':11,'font-weight':700,style:'fill:'+LC.T});
+  tx(s,240,E.R7[1]-6,'S9 Echo → 19',{'font-size':11,'font-weight':700,style:'fill:'+LC.E});
+  tx(s,250,E.R5[1]+4,'S10 R → 21',{'font-size':10,'font-weight':700,style:'fill:'+LC.R});
+  tx(s,250,E.R2[1]+12,'S11 G → 22',{'font-size':10,'font-weight':700,style:'fill:'+LC.G});
+  tx(s,250,E.R1[1]-2,'S12 B → 23',{'font-size':10,'font-weight':700,style:'fill:'+LC.B});
+  tx(s,646,236,'VCC → 5V 레일',{'font-size':10,'font-weight':700,style:'fill:#f08a00'});
+  tx(s,896,250,'GND → GND 레일',{'font-size':10,'font-weight':700});
+  tx(s,600,505,'가운데(●)에서 GPIO19로 · 2kΩ는 GND 레일로',{'font-size':11,class:'mut'});
+})();
+
+/* ---------- 그림 P: 핀 위치 ---------- */
+(function(){
+  const s=document.getElementById('figP');
+  const C={L2:'#0f766e',R6:'#1f2328',L4:'#7c3aed',L6:'#2563eb',L7:'#0891b2',L8:'#db2777',L9:'#ca8a04',L10:'#16a34a',L13:'#1f2328',L14:'#7c3aed',L18:'#f08a00',L0:'#dc2626',
+           R0:'#1f2328',R1:'#2563eb',R2:'#16a34a',R5:'#dc2626',R7:'#a16207',R8:'#0d9488',R12:'#9ca3af'};
+  const E=esp32(s,265,40,C);
+  const LL={L0:'H1 3V3 → KY-024 + (도주차) · 5V 넣으면 고장!',L2:'H3 VP=GPIO36 → KY-024 A0 (도주차)',L4:'S13 배터리 측정',L6:'S5 IN3',L7:'S6 IN4',L8:'S1 ENA',L9:'S2 IN1',L10:'S3 IN2',L13:'P6 GND',L14:'S4 ENB',L18:'P5 5V (USB 시 뽑기)'};
+  const RL={R0:'LED 모듈 −',R1:'S12 LED B',R2:'S11 LED G',R5:'S10 LED R',R7:'S9 초음파 Echo',R8:'S8 초음파 Trig',R6:'H2 GND → KY-024 G (도주차)',R12:'GPIO4 비어 있음'};
+  Object.keys(LL).forEach(function(k){const p=E[k];el('line',{x1:p[0]-8,y1:p[1],x2:p[0]-26,y2:p[1],stroke:C[k],'stroke-width':2},s);tx(s,p[0]-30,p[1]+4,LL[k],{'text-anchor':'end','font-size':11,'font-weight':700,style:'fill:'+(k==='L13'?'var(--svgtext)':C[k])});});
+  Object.keys(RL).forEach(function(k){const p=E[k];el('line',{x1:p[0]+8,y1:p[1],x2:p[0]+26,y2:p[1],stroke:C[k],'stroke-width':2},s);tx(s,p[0]+30,p[1]+4,RL[k],{'font-size':11,'font-weight':700,style:'fill:'+(k==='R0'?'var(--svgtext)':C[k])});});
+})();
+
+/* ---------- 그림 5: KY-024 배선 ---------- */
+(function(){
+  const s=document.getElementById('fig5');
+  el('rect',{x:60,y:110,width:220,height:110,rx:6,fill:'#1d4ed8'},s);
+  el('rect',{x:24,y:146,width:40,height:30,rx:4,fill:'#111'},s);
+  tx(s,44,166,'49E',{'text-anchor':'middle','font-size':10,'font-weight':700,style:'fill:#fff'});
+  [154,162,170].forEach(function(y){el('line',{x1:64,y1:y,x2:80,y2:y,stroke:'#cbd5e1','stroke-width':2},s);});
+  el('rect',{x:110,y:125,width:28,height:28,rx:3,fill:'#2563eb',stroke:'#cbd5e1'},s);el('circle',{cx:124,cy:139,r:6,fill:'#e5e7eb'},s);
+  el('rect',{x:160,y:170,width:40,height:22,rx:3,fill:'#111'},s);
+  tx(s,170,138,'KY-024',{'font-size':12,'font-weight':700,style:'fill:#fff'});
+  tx(s,30,240,'↑ 센서 칩: 글자 면이 차 뒤쪽을 향하게',{'font-size':11,'font-weight':700,style:'fill:#b45309'});
+  const kp={};[['A0',128],['G',150],['+',172],['D0',194]].forEach(function(q){el('rect',{x:280,y:q[1]-4,width:12,height:8,fill:'#d4a72c'},s);tx(s,272,q[1]+4,q[0],{'text-anchor':'end','font-size':11,'font-weight':700,style:'fill:#fff'});kp[q[0]]=[292,q[1]];});
+  const E=esp32(s,500,24,{L0:'#dc2626',L2:'#0f766e',R6:'#1f2328'});
+  function cv(a,b,c){wire(s,'M'+a[0]+' '+a[1]+' C'+(a[0]+120)+' '+a[1]+' '+(b[0]-120)+' '+b[1]+' '+b[0]+' '+b[1],'',4,c);}
+  cv(kp['+'],E.L0,'#dc2626');cv(kp.A0,E.L2,'#0f766e');
+  wire(s,'M'+kp.G[0]+' '+kp.G[1]+' C380 '+kp.G[1]+' 380 470 520 470 H720 C740 470 740 '+E.R6[1]+' '+E.R6[0]+' '+E.R6[1],'',4,'var(--wgnd)');
+  tx(s,300,214,'D0 — 연결 안 함 ✕',{'font-size':11,class:'mut'});
+  tx(s,330,40,'H1  + → 3V3 (5V 아님!)',{'font-size':11,'font-weight':700,style:'fill:#dc2626'});
+  tx(s,330,96,'H3  A0 → VP (GPIO36)',{'font-size':11,'font-weight':700,style:'fill:#0f766e'});
+  tx(s,330,330,'H2  G → 오른쪽 줄 가운데 GND',{'font-size':11,'font-weight':700});
+  tx(s,30,280,'도주차에만 답니다.',{'font-size':12,class:'mut'});
+  tx(s,30,300,'핀 순서는 모듈마다 다를 수 있으니',{'font-size':12,class:'mut'});
+  tx(s,30,318,'기판 글자를 보세요.',{'font-size':12,class:'mut'});
+})();
+
+/* ---------- 그림 6: 자석 · 센서 위치 (옆에서) ---------- */
+(function(){
+  const s=document.getElementById('fig6');
+  function car(x,label,col){el('rect',{x:x,y:90,width:300,height:70,rx:10,fill:col,stroke:'#1f2328','stroke-width':2},s);
+    el('circle',{cx:x+250,cy:170,r:32,fill:'#2b2b2b'},s);el('circle',{cx:x+250,cy:170,r:12,fill:'#9ca3af'},s);
+    el('circle',{cx:x+40,cy:192,r:10,fill:'#9ca3af',stroke:'#2b2b2b','stroke-width':3},s);
+    tx(s,x+150,130,label,{'text-anchor':'middle','font-size':14,'font-weight':700,style:'fill:#1f2328'});}
+  el('line',{x1:10,y1:202,x2:890,y2:202,stroke:'#8a919b','stroke-width':2},s);
+  car(40,'추격차 → (앞)','#fde68a');car(470,'도주차 → (앞)','#bfdbfe');
+  el('rect',{x:340,y:104,width:16,height:40,rx:3,fill:'#9ca3af',stroke:'#475569'},s);
+  el('rect',{x:340,y:104,width:8,height:40,fill:'#dc2626'},s);
+  tx(s,348,96,'자석',{'text-anchor':'middle','font-size':12,'font-weight':700});
+  el('rect',{x:310,y:58,width:26,height:30,rx:3,fill:'#1d4ed8'},s);tx(s,280,52,'초음파',{'text-anchor':'middle','font-size':11,class:'mut'});
+  el('rect',{x:452,y:112,width:18,height:24,rx:3,fill:'#111'},s);
+  tx(s,470,96,'KY-024',{'text-anchor':'middle','font-size':12,'font-weight':700});
+  wire(s,'M358 124 H450','',2,'#16a34a');
+  el('path',{d:'M358 124 l8 -5 v10 z M450 124 l-8 -5 v10 z',fill:'#16a34a'},s);
+  tx(s,404,116,'3~5 cm',{'text-anchor':'middle','font-size':13,'font-weight':700,style:'fill:#16a34a'});
+  el('line',{x1:404,y1:130,x2:404,y2:202,stroke:'#b45309','stroke-width':1.5,'stroke-dasharray':'4 3'},s);
+  tx(s,410,175,'같은 높이',{'font-size':11,'font-weight':700,style:'fill:#b45309'});
+  tx(s,450,236,'추격차는 뒤에서 따라붙어 잡습니다. 앞이 너무 가까우면 초음파가 멈춰 줘서 부딪히지 않습니다.',{'text-anchor':'middle','font-size':12,class:'mut'});
+})();
+
+/* ---------- 체크박스 진행률 ---------- */
+const KEY='rccar-l298n-wiring-v1';
+let st={};try{st=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){st={};}
+const boxes=[].slice.call(document.querySelectorAll('.chk input'));
+function upd(){const n=boxes.filter(function(b){return b.checked;}).length;document.getElementById('pgtxt').textContent=n+' / '+boxes.length+' 확인';document.getElementById('pgbar').style.width=(boxes.length?100*n/boxes.length:0)+'%';}
+boxes.forEach(function(b){b.checked=!!st[b.dataset.k];b.parentNode.classList.toggle('done',b.checked);
+  b.addEventListener('change',function(){st[b.dataset.k]=b.checked;b.parentNode.classList.toggle('done',b.checked);try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}upd();});});
+document.getElementById('reset').addEventListener('click',function(){if(!confirm('체크를 모두 지울까요?'))return;st={};boxes.forEach(function(b){b.checked=false;b.parentNode.classList.remove('done');});try{localStorage.removeItem(KEY);}catch(e){}upd();});
+upd();
+})();
+</script>
+</body>
+</html>

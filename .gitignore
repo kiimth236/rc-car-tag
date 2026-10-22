@@ -3,3 +3,7 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
+
+# 예전 문서(TB6612 시절) — PC에만 보관, 저장소에는 안 올림
+docs/old/
+docs/RCar.zip

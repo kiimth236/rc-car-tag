@@ -232,14 +232,14 @@ Wi-Fi STA 모드 · 채널 1 고정 · 다른 팀 표시 또는 다른 판 번�
   <div class="sum"><b>요약</b> — USB 시리얼(점검 프로그램)로 한 번 넣으면 ESP32에 저장됩니다. 본 프로그램은 읽기만 합니다.</div>
   <div class="tw"><table>
     <tr><th>이름</th><th>값</th><th>정하는 방법</th></tr>
-    <tr><td>차 번호</td><td>1~4</td><td>차에 붙인 번호</td></tr>
-    <tr><td>역할</td><td>추격 / 도주</td><td>1번 = 추격 권장 (바꿀 수 있음)</td></tr>
+    <tr><td>차 번호</td><td>1~4</td><td>차에 붙인 번호. 점검 프로그램 <code>r</code> (예: <code>r 2 runner</code>)</td></tr>
+    <tr><td>역할</td><td>추격 / 도주</td><td>1번 = 추격 권장 (바꿀 수 있음). 위 <code>r</code>로 번호와 함께 저장</td></tr>
     <tr><td>BLE 이름</td><td><code>RCAR-번호</code></td><td>차 번호로 자동</td></tr>
-    <tr><td>방향 반전 L / R</td><td>예 / 아니오</td><td>점검 프로그램 m (모터 방향)</td></tr>
-    <tr><td>최소 듀티</td><td>0~255</td><td>점검 프로그램 n</td></tr>
-    <tr><td>배터리 보정계수</td><td>약 0.9~1.1</td><td>점검 프로그램 b (멀티미터 값 입력)</td></tr>
-    <tr><td>잡힘 기준 (mV)</td><td>시험값</td><td>점검 프로그램 h (자석을 5cm에 두고 값 기록)</td></tr>
-    <tr><td>PWM 주파수</td><td>기본 1000</td><td>점검 프로그램에서 비교 후 4대 공통으로</td></tr>
+    <tr><td>방향 반전 L / R</td><td>예 / 아니오</td><td>점검 프로그램 <code>m</code> (모터 방향)</td></tr>
+    <tr><td>최소 듀티</td><td>0~255</td><td>점검 프로그램 <code>n</code></td></tr>
+    <tr><td>배터리 보정계수</td><td>약 0.9~1.1</td><td>점검 프로그램 <code>b</code>로 측정 → 멀티미터로 잰 전압을 <code>c</code>로 입력 (예: <code>c 7.52</code>)</td></tr>
+    <tr><td>잡힘 기준 (mV)</td><td>시험값</td><td>점검 프로그램 <code>g</code>로 측정 → 자석을 5cm에 두고 <code>k</code>로 저장 (직접 넣으려면 <code>k 35</code>)</td></tr>
+    <tr><td>PWM 주파수</td><td>기본 1000</td><td>점검 프로그램 <code>f</code>로 바꿔 비교 후 4대 공통으로 (예: <code>f 1000</code>)</td></tr>
   </table></div>
 </section>
 

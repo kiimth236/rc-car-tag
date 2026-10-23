@@ -18,6 +18,7 @@ GitHub 화면에서 `.html` 파일을 누르면 코드만 보입니다. **내려
 |---|---|---|
 | ① 먼저 | `docs/rc-car-l298n-design.html` | **설계서** — 게임 규칙, 잡힘 방식, 차가 멈추는 조건, 시험 방법 |
 | ② 조립할 때 | `docs/rc-car-l298n-wiring.html` | **배선 가이드** — 0~12단계 그림 설명서. 체크박스로 진행 표시 |
+| 부품 나눌 때 | `docs/rc-car-parts-list.pdf` | **부품 목록** — 1쪽 도주차, 2쪽 추격차. 1대분씩 그림과 개수 (봉투에 넣는 체크리스트) |
 
 ---
 
@@ -101,3 +102,4 @@ p 배선 → m 모터 방향 → n 최소 출력 → d 주행 데모 → s 정�
 
 - `docs/rc-car-l298n-design.html` — 설계서 (먼저 읽기)
 - `docs/rc-car-l298n-wiring.html` — 배선 가이드 (조립용)
+- `docs/rc-car-parts-list.pdf` — 부품 목록 (도주차 · 추격차 1대분씩)

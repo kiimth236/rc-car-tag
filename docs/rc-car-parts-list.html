@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RC카 부품 목록</title>
+<style>
+  @page { size: A4; margin: 9mm 10mm; }
+  :root {
+    --ink: #1f2430; --sub: #5b6475; --line: #d9dde5; --soft: #f5f6f9;
+    --run: #1f7a5a; --run-soft: #e6f4ee; --chase: #c2410c; --chase-soft: #fdeee4;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #fff; color: var(--ink);
+    font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+  .page { width: 190mm; height: 278mm; margin: 0 auto; display: flex; flex-direction: column;
+    page-break-after: always; break-after: page; overflow: hidden; }
+  .page:last-child { page-break-after: auto; break-after: auto; }
+  .run { --acc: var(--run); --acc-soft: var(--run-soft); }
+  .chase { --acc: var(--chase); --acc-soft: var(--chase-soft); }
+
+  header { display: flex; align-items: stretch; gap: 4mm; margin-bottom: 3mm; }
+  .badge { background: var(--acc); color: #fff; border-radius: 3mm; padding: 3mm 4mm;
+    display: flex; flex-direction: column; justify-content: center; min-width: 36mm; }
+  .badge b { font-size: 9mm; line-height: 1; letter-spacing: -0.3mm; }
+  .badge span { font-size: 3.2mm; opacity: .9; margin-top: 1.5mm; }
+  .head-main { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  h1 { font-size: 7mm; margin: 0 0 1.5mm; letter-spacing: -0.2mm; }
+  .sum { font-size: 3.3mm; color: var(--sub); line-height: 1.5; }
+  .sum b { color: var(--ink); }
+  .carno { border: 0.4mm solid var(--acc); border-radius: 3mm; width: 34mm; display: flex;
+    flex-direction: column; justify-content: center; align-items: center; font-size: 3.2mm; color: var(--sub); }
+  .carno .box { font-size: 9mm; color: var(--line); line-height: 1.1; }
+
+  .grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; column-gap: 4mm; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  th { font-size: 3mm; color: var(--sub); font-weight: 600; text-align: left; padding: 1.2mm 1mm;
+    border-bottom: 0.4mm solid var(--ink); }
+  th.c, td.c { text-align: center; }
+  td { border-bottom: 0.25mm solid var(--line); padding: 0.8mm 1mm; vertical-align: middle; height: 22.4mm; }
+  col.chk { width: 6mm; } col.pic { width: 30mm; } col.qty { width: 17mm; }
+  .ck { width: 4.2mm; height: 4.2mm; border: 0.35mm solid var(--sub); border-radius: 0.8mm; margin: auto; }
+  .pic svg { width: 28mm; height: 19.5mm; display: block; margin: auto; }
+  .nm { font-size: 3.6mm; font-weight: 700; line-height: 1.3; }
+  .sp { font-size: 2.85mm; color: var(--sub); line-height: 1.4; margin-top: 0.6mm; }
+  .qty b { font-size: 6.2mm; line-height: 1; }
+  .qty small { display: block; font-size: 2.8mm; color: var(--sub); margin-top: 0.4mm; }
+  .qty .multi { font-size: 3.1mm; line-height: 1.55; text-align: left; display: inline-block; }
+  .qty .multi b { font-size: 3.6mm; }
+  .qty .txt { font-size: 4.2mm; font-weight: 700; line-height: 1.2; }
+  tr.role td { background: var(--acc-soft); }
+  tr.role .nm::after { content: " ★ 이 역할만"; color: var(--acc); font-size: 2.8mm; font-weight: 700; }
+
+  footer { margin-top: 2.5mm; display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; font-size: 2.9mm; line-height: 1.5; }
+  .note { background: var(--soft); border-radius: 2mm; padding: 2mm 3mm; }
+  .note.warn { background: var(--acc-soft); }
+  .note b { color: var(--ink); }
+</style>
+</head>
+<body>
+
+<section class="page run" id="p-run"></section>
+<section class="page chase" id="p-chase"></section>
+
+<script>
+/* ---------- 부품 그림 (모듈 기준, 실제 모양을 단순하게) ---------- */
+const S = (inner) => `<svg viewBox="0 0 120 84" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+const pins = (x, y, n, dx, r = 1.6, fill = '#c9a227') =>
+  Array.from({ length: n }, (_, i) => `<rect x="${x + i * dx - r}" y="${y - r}" width="${r * 2}" height="${r * 2}" fill="${fill}"/>`).join('');
+const legs = (x1, x2, y1, y2) => `<line x1="${x1}" y1="${y1}" x2="${x1}" y2="${y2}" stroke="#9aa1ab" stroke-width="2"/><line x1="${x2}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#9aa1ab" stroke-width="2"/>`;
+const band = { 0: '#111', 1: '#7a4a1e', 2: '#d22', 3: '#f08a1c', 4: '#f3d21b', g: '#c9a227' };
+
+const ART = {
+  esp32: S(`<rect x="8" y="14" width="104" height="56" rx="3" fill="#20304a"/>
+    ${pins(14, 18, 19, 5.1)}${pins(14, 66, 19, 5.1)}
+    <rect x="48" y="25" width="50" height="34" rx="2" fill="#b9c0c9"/><text x="73" y="45" font-size="9" text-anchor="middle" fill="#3a4350" font-family="sans-serif" font-weight="700">ESP32</text>
+    <rect x="98" y="29" width="14" height="26" fill="#d7dadf"/><rect x="2" y="34" width="12" height="16" rx="1" fill="#9aa1ab"/>
+    <rect x="20" y="30" width="12" height="9" fill="#111"/><rect x="20" y="46" width="12" height="9" fill="#111"/>`),
+  l298n: S(`<rect x="10" y="16" width="100" height="62" rx="3" fill="#c62828"/>
+    <rect x="38" y="4" width="44" height="40" fill="#222"/>${Array.from({ length: 7 }, (_, i) => `<rect x="${40 + i * 6}" y="4" width="3" height="40" fill="#3a3a3a"/>`).join('')}
+    <rect x="12" y="34" width="14" height="22" fill="#1e63c6"/><rect x="94" y="34" width="14" height="22" fill="#1e63c6"/>
+    <rect x="34" y="62" width="24" height="12" fill="#1e63c6"/>${pins(66, 68, 6, 6, 1.7)}
+    <rect x="63" y="58" width="6" height="5" fill="#111"/><rect x="99" y="58" width="6" height="5" fill="#111"/>`),
+  tt: S(`<rect x="14" y="22" width="72" height="40" rx="5" fill="#f2c230"/><rect x="14" y="22" width="72" height="40" rx="5" fill="none" stroke="#c99a12" stroke-width="2"/>
+    <rect x="86" y="30" width="26" height="24" rx="4" fill="#f2c230" stroke="#c99a12" stroke-width="2"/>
+    <rect x="44" y="6" width="9" height="16" fill="#eee" stroke="#999"/><rect x="44" y="62" width="9" height="16" fill="#eee" stroke="#999"/>
+    <circle cx="30" cy="42" r="5" fill="#c99a12"/><path d="M112 36 l6 -4 M112 48 l6 4" stroke="#c0392b" stroke-width="2.5"/>`),
+  wheel: S(`<circle cx="60" cy="42" r="38" fill="#222"/><circle cx="60" cy="42" r="31" fill="#333"/>
+    ${Array.from({ length: 16 }, (_, i) => { const a = i * Math.PI / 8; return `<line x1="${60 + 32 * Math.cos(a)}" y1="${42 + 32 * Math.sin(a)}" x2="${60 + 37 * Math.cos(a)}" y2="${42 + 37 * Math.sin(a)}" stroke="#555" stroke-width="3"/>`; }).join('')}
+    <circle cx="60" cy="42" r="22" fill="#f2c230"/>${Array.from({ length: 6 }, (_, i) => { const a = i * Math.PI / 3; return `<circle cx="${60 + 13 * Math.cos(a)}" cy="${42 + 13 * Math.sin(a)}" r="4" fill="#c99a12"/>`; }).join('')}
+    <circle cx="60" cy="42" r="5" fill="#fff" stroke="#c99a12" stroke-width="2"/>`),
+  caster: S(`<rect x="20" y="16" width="80" height="14" rx="3" fill="#aab2bc"/><circle cx="32" cy="23" r="3.5" fill="#fff"/><circle cx="88" cy="23" r="3.5" fill="#fff"/>
+    <path d="M40 30 h40 l-6 22 h-28 z" fill="#8a929c"/><circle cx="60" cy="58" r="17" fill="#d6dbe1"/><circle cx="54" cy="52" r="5" fill="#fff" opacity=".8"/>`),
+  cell: S(`<rect x="10" y="26" width="96" height="32" rx="6" fill="#2d6cdf"/><rect x="10" y="26" width="16" height="32" rx="6" fill="#244f9e"/>
+    <rect x="106" y="34" width="6" height="16" rx="2" fill="#c9ced6"/><text x="64" y="46" font-size="10" text-anchor="middle" fill="#fff" font-family="sans-serif" font-weight="700">18650</text>
+    <text x="17" y="46" font-size="10" text-anchor="middle" fill="#fff" font-family="sans-serif">−</text><text x="100" y="47" font-size="11" text-anchor="middle" fill="#fff" font-family="sans-serif">+</text>`),
+  holder: S(`<rect x="8" y="12" width="104" height="58" rx="4" fill="#1d1d1f"/><rect x="14" y="17" width="92" height="22" rx="10" fill="#333"/><rect x="14" y="44" width="92" height="22" rx="10" fill="#333"/>
+    <rect x="102" y="20" width="4" height="16" fill="#c9ced6"/><rect x="14" y="47" width="4" height="16" fill="#c9ced6"/>
+    <path d="M10 70 q-4 8 6 12" stroke="#d32f2f" stroke-width="3" fill="none"/><path d="M20 70 q0 8 10 12" stroke="#111" stroke-width="3" fill="none"/>`),
+  fuse: S(`<path d="M4 42 h22" stroke="#d32f2f" stroke-width="4"/><path d="M94 42 h22" stroke="#d32f2f" stroke-width="4"/>
+    <rect x="24" y="30" width="36" height="24" rx="5" fill="#222"/><rect x="60" y="30" width="36" height="24" rx="5" fill="#2a2a2a"/>
+    <rect x="34" y="62" width="52" height="14" rx="3" fill="#e8f1fb" stroke="#9aa1ab"/><rect x="34" y="62" width="9" height="14" fill="#c9ced6"/><rect x="77" y="62" width="9" height="14" fill="#c9ced6"/>
+    <path d="M43 69 h34" stroke="#555" stroke-width="1"/><text x="60" y="22" font-size="11" text-anchor="middle" fill="#333" font-family="sans-serif" font-weight="700">3A</text>`),
+  switch: S(`<rect x="26" y="18" width="68" height="44" rx="4" fill="#1d1d1f"/><rect x="34" y="24" width="52" height="32" rx="3" fill="#d32f2f"/>
+    <path d="M34 40 h52" stroke="#a51f1f" stroke-width="2"/><text x="47" y="36" font-size="9" fill="#fff" font-family="sans-serif" font-weight="700">I</text><text x="66" y="52" font-size="9" fill="#fff" font-family="sans-serif" font-weight="700">O</text>
+    <rect x="44" y="62" width="8" height="14" fill="#c9ced6"/><rect x="68" y="62" width="8" height="14" fill="#c9ced6"/>`),
+  breadboard: S(`<rect x="10" y="8" width="100" height="70" rx="3" fill="#f3f3ef" stroke="#cfcfc6"/>
+    <line x1="14" y1="14" x2="106" y2="14" stroke="#d32f2f" stroke-width="1.5"/><line x1="14" y1="72" x2="106" y2="72" stroke="#1e63c6" stroke-width="1.5"/>
+    ${[18, 68].map(y => Array.from({ length: 15 }, (_, i) => `<rect x="${17 + i * 6}" y="${y}" width="2.2" height="2.2" fill="#555"/>`).join('')).join('')}
+    ${Array.from({ length: 10 }, (_, r) => Array.from({ length: 15 }, (_, i) => `<rect x="${17 + i * 6}" y="${25 + r * 4.2 + (r > 4 ? 3 : 0)}" width="2.2" height="2.2" fill="#666"/>`).join('')).join('')}
+    <rect x="12" y="45" width="96" height="3" fill="#e2e2da"/>`),
+  cap470: S(`<rect x="38" y="6" width="44" height="56" rx="8" fill="#1f4fa3"/><rect x="38" y="6" width="44" height="6" rx="3" fill="#c9ced6"/>
+    <rect x="68" y="12" width="9" height="50" fill="#dfe7f5"/><text x="72.5" y="40" font-size="8" text-anchor="middle" fill="#1f4fa3" font-family="sans-serif" font-weight="700">−</text>
+    <text x="53" y="40" font-size="8" text-anchor="middle" fill="#fff" font-family="sans-serif" font-weight="700" transform="rotate(-90 53 38)">470µF</text>
+    ${legs(52, 70, 62, 82)}<line x1="52" y1="62" x2="52" y2="84" stroke="#9aa1ab" stroke-width="2"/>`),
+  cap104: S(`<ellipse cx="60" cy="32" rx="22" ry="20" fill="#e8a634"/><ellipse cx="54" cy="26" rx="7" ry="4" fill="#f4c46b"/>
+    <text x="60" y="37" font-size="13" text-anchor="middle" fill="#6b4410" font-family="sans-serif" font-weight="700">104</text>${legs(52, 68, 50, 82)}`),
+  sonar: S(`<rect x="6" y="14" width="108" height="50" rx="3" fill="#1e63c6"/>
+    <circle cx="32" cy="39" r="20" fill="#c9ced6"/><circle cx="32" cy="39" r="15" fill="#3c3c3c"/><circle cx="32" cy="39" r="9" fill="#555"/>
+    <circle cx="88" cy="39" r="20" fill="#c9ced6"/><circle cx="88" cy="39" r="15" fill="#3c3c3c"/><circle cx="88" cy="39" r="9" fill="#555"/>
+    <rect x="54" y="20" width="12" height="9" fill="#ddd"/>${pins(51, 72, 4, 6, 1.8)}${Array.from({ length: 4 }, (_, i) => `<line x1="${51 + i * 6}" y1="64" x2="${51 + i * 6}" y2="72" stroke="#c9a227" stroke-width="2"/>`).join('')}`),
+  led: S(`<rect x="30" y="16" width="60" height="44" rx="3" fill="#1d1d1f"/><circle cx="60" cy="35" r="13" fill="#f4f6f8"/>
+    <circle cx="55" cy="31" r="3.5" fill="#e53935" opacity=".7"/><circle cx="65" cy="31" r="3.5" fill="#43a047" opacity=".7"/><circle cx="60" cy="40" r="3.5" fill="#1e88e5" opacity=".7"/>
+    ${Array.from({ length: 4 }, (_, i) => `<line x1="${46 + i * 9.3}" y1="60" x2="${46 + i * 9.3}" y2="78" stroke="#c9a227" stroke-width="2.5"/>`).join('')}
+    <text x="60" y="57" font-size="6" text-anchor="middle" fill="#ccc" font-family="sans-serif">R G B −</text>`),
+  wire: S(`<path d="M12 60 c10 -40 30 -40 40 0 s30 40 40 0 s20 -30 20 -10" stroke="#d32f2f" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M10 30 c10 40 30 40 40 0 s30 -40 40 0 s20 30 22 14" stroke="#1d1d1f" stroke-width="5" fill="none" stroke-linecap="round"/>`),
+  jumper: S(`${[['#d32f2f', 'M', 'M', 16], ['#2e7d32', 'M', 'F', 42], ['#1e63c6', 'F', 'F', 68]].map(([c, a, b, y]) =>
+    `<path d="M22 ${y} h76" stroke="${c}" stroke-width="3.5"/>` +
+    [[a, 8], [b, 98]].map(([t, x]) => `<rect x="${x}" y="${y - 5}" width="14" height="10" fill="#222"/>` +
+      (t === 'M' ? `<rect x="${x === 8 ? 1 : 112}" y="${y - 1}" width="7" height="2" fill="#c9a227"/>` : `<rect x="${x === 8 ? 8 : 108}" y="${y - 1.3}" width="4" height="2.6" fill="#555"/>`)).join('')).join('')}`),
+  ky024: S(`<rect x="22" y="10" width="76" height="52" rx="3" fill="#c62828"/>
+    <rect x="30" y="18" width="18" height="14" rx="2" fill="#1e63c6"/><circle cx="39" cy="25" r="4" fill="#e8e8e8"/><path d="M36 25 h6" stroke="#666" stroke-width="1.5"/>
+    <rect x="58" y="18" width="16" height="12" fill="#222"/><rect x="78" y="22" width="10" height="6" fill="#ddd"/>
+    <rect x="47" y="38" width="12" height="10" fill="#1d1d1f"/>${[49, 53, 57].map(x => `<line x1="${x}" y1="48" x2="${x}" y2="56" stroke="#c9ced6" stroke-width="1.5"/>`).join('')}
+    ${Array.from({ length: 4 }, (_, i) => `<line x1="${44 + i * 10}" y1="62" x2="${44 + i * 10}" y2="80" stroke="#c9a227" stroke-width="2.5"/>`).join('')}
+    <text x="60" y="60" font-size="5.5" text-anchor="middle" fill="#fff" font-family="sans-serif">A0  G  +  D0</text>`),
+  magnet: S(`<ellipse cx="60" cy="58" rx="36" ry="12" fill="#8f979f"/><rect x="24" y="30" width="72" height="28" fill="#aab2bc"/>
+    <ellipse cx="60" cy="30" rx="36" ry="12" fill="#dfe3e8"/><ellipse cx="50" cy="27" rx="12" ry="3" fill="#fff" opacity=".7"/>
+    <text x="60" y="34" font-size="11" text-anchor="middle" fill="#555" font-family="sans-serif" font-weight="700">N</text>
+    <text x="60" y="80" font-size="8" text-anchor="middle" fill="#555" font-family="sans-serif">Ø20 × 10mm</text>`),
+};
+
+/* ---------- 1대분 부품 (배선 가이드 0단계 + 전체 연결표에서 셈) ---------- */
+const common = [
+  { a: 'esp32', n: 'ESP32 DevKitC V4', s: 'WROOM-32D · CP2102. 차의 두뇌', q: 1 },
+  { a: 'l298n', n: 'L298N 모터 드라이버', s: '빨간 기판 + 검은 방열판', q: 1 },
+  { a: 'tt', n: 'TT 기어모터', s: '앞바퀴 왼쪽 · 오른쪽', q: 2 },
+  { a: 'wheel', n: '바퀴 65mm', s: 'TT모터 축에 끼움', q: 2 },
+  { a: 'caster', n: '볼캐스터', s: '뒤쪽 가운데', q: 1 },
+  { a: 'cell', n: '18650 배터리', s: '보호회로 있는 셀', q: 2 },
+  { a: 'holder', n: '18650 2구 직렬 홀더', s: '2개 직렬 = 7.4V', q: 1 },
+  { a: 'fuse', n: '퓨즈 3A + 퓨즈 홀더', s: '배터리 + 선에 끼움', q: 1 },
+  { a: 'switch', n: '전원 스위치', s: 'DC 3A 이상 (작은 슬라이드 ✕)', q: 1 },
+  { a: 'breadboard', n: '미니 브레드보드', s: '5V · GND 레일 + 저항', q: 1 },
+  { a: 'cap470', n: '전해 커패시터 470µF', s: '10V 이상. 긴 다리 = +', q: 1 },
+  { a: 'cap104', n: '세라믹 커패시터 0.1µF', s: '"104" 표시. 모터마다 3 + 배터리 측정 1', q: 7 },
+  { a: 'res', n: '저항 4종', s: '100kΩ 갈검노 · 33kΩ 주주주 (배터리 측정)<br>1kΩ 갈검빨 · 2kΩ 빨검빨 (초음파)', q: '각 1' },
+  { a: 'sonar', n: 'HC-SR04 초음파 센서', s: '5V로 켬', q: 1 },
+  { a: 'led', n: '3색 LED 모듈 (4핀)', s: '저항 내장. 상태 표시', q: 1 },
+  { a: 'wire', n: '22AWG 전선', s: '빨강 · 검정 한 줄씩. 배터리 · 모터 같은 큰 전류', q: '각 50cm' },
+];
+const jumper = (ff) => ({ a: 'jumper', n: '점퍼선 3종', s: '위부터 수-수 · 수-암 · 암-암',
+  multi: [['수-수', 3], ['수-암', 7], ['암-암', ff]] });
+
+const pages = {
+  run: {
+    badge: '도주차', badgeSub: 'RUNNER · 3대',
+    title: '도주차 1대분 부품 목록',
+    sum: '도주차는 <b>3대</b>입니다. 이 장을 <b>3장 인쇄</b>해서 봉투마다 한 장씩 넣고, ☐에 체크하며 담으세요. 추격차와 다른 점은 <b>KY-024 홀 센서</b>와 센서용 <b>암-암 점퍼 3개</b>입니다.',
+    rows: [...common, jumper(13), { a: 'ky024', n: 'KY-024 홀 센서 모듈', s: '차 뒤쪽 끝 가운데. 자석을 감지 (A0 핀 있는 것. KY-003 ✕)', q: 1, role: true }],
+    notes: [
+      '<b>점퍼선 개수:</b> 수-수 3 = 5V 레일 2 + 배터리 측정 1 · 수-암 7 = ESP32 전원 2 + 배터리 측정 1 + 초음파 4 · 암-암 13 = 모터 신호 6 + LED 4 + <b>KY-024 3</b>',
+      '<b>⚠ KY-024는 3.3V로 켭니다</b> (ESP32 3V3 핀). D0 핀은 연결하지 않습니다.<br><b>따로 준비:</b> 인두·납, 멀티미터, 양면테이프·글루건 (센서 고정)',
+    ],
+  },
+  chase: {
+    badge: '추격차', badgeSub: 'CHASER · 1대',
+    title: '추격차 1대분 부품 목록',
+    sum: '추격차는 <b>1대</b>입니다. 이 장을 1장 인쇄해서 봉투에 넣고, ☐에 체크하며 담으세요. 도주차와 다른 점은 앞범퍼의 <b>네오디뮴 자석</b>이고, KY-024는 <b>필요 없습니다</b>.',
+    rows: [...common, jumper(10), { a: 'magnet', n: '네오디뮴 원형 자석', s: '지름 20 × 두께 10mm, N42 이상. 앞범퍼 끝 가운데', q: 1, role: true }],
+    notes: [
+      '<b>점퍼선 개수:</b> 수-수 3 = 5V 레일 2 + 배터리 측정 1 · 수-암 7 = ESP32 전원 2 + 배터리 측정 1 + 초음파 4 · 암-암 10 = 모터 신호 6 + LED 4',
+      '<b>⚠ 자석 주의:</b> 서로 붙을 때 손가락이 끼일 수 있고 쉽게 깨집니다. 폰·카드에서 멀리 두세요.<br><b>따로 준비:</b> 인두·납, 멀티미터, 양면테이프·글루건 (자석 고정)',
+    ],
+  },
+};
+
+const resArt = S(`${[['1', '0', '4', 14], ['3', '3', '3', 34], ['1', '0', '2', 54], ['2', '0', '2', 74]].map(([a, b, c, y]) =>
+  `<line x1="6" y1="${y}" x2="114" y2="${y}" stroke="#9aa1ab" stroke-width="1.8"/><rect x="30" y="${y - 7}" width="60" height="14" rx="6" fill="#e6cfa0"/>` +
+  [a, b, c].map((k, i) => `<rect x="${38 + i * 9}" y="${y - 7}" width="5" height="14" fill="${band[k]}"/>`).join('') +
+  `<rect x="78" y="${y - 7}" width="5" height="14" fill="${band.g}"/>`).join('')}`);
+
+function row(r) {
+  const art = r.a === 'res' ? resArt : ART[r.a];
+  const qty = r.multi
+    ? `<span class="multi">${r.multi.map(([k, v]) => `${k} <b>${v}</b>`).join('<br>')}</span>`
+    : typeof r.q === 'string' ? `<span class="txt">${r.q}</span>` : `<b>${r.q}</b><small>개</small>`;
+  return `<tr class="${r.role ? 'role' : ''}"><td class="c"><div class="ck"></div></td><td class="pic">${art}</td>
+    <td><div class="nm">${r.n}</div><div class="sp">${r.s}</div></td><td class="c qty">${qty}</td></tr>`;
+}
+function table(rows) {
+  return `<table><colgroup><col class="chk"><col class="pic"><col><col class="qty"></colgroup>
+    <thead><tr><th class="c">✓</th><th class="c">그림</th><th>부품</th><th class="c">개수</th></tr></thead>
+    <tbody>${rows.map(row).join('')}</tbody></table>`;
+}
+for (const [key, p] of Object.entries(pages)) {
+  const half = Math.ceil(p.rows.length / 2);
+  document.getElementById('p-' + key).innerHTML = `
+    <header>
+      <div class="badge"><b>${p.badge}</b><span>${p.badgeSub}</span></div>
+      <div class="head-main"><h1>${p.title}</h1><div class="sum">${p.sum}</div></div>
+      <div class="carno">차 번호<div class="box">___</div></div>
+    </header>
+    <div class="grid">${table(p.rows.slice(0, half))}${table(p.rows.slice(half))}</div>
+    <footer>${p.notes.map((n, i) => `<div class="note ${i ? 'warn' : ''}">${n}</div>`).join('')}</footer>`;
+}
+</script>
+</body>
+</html>

@@ -77,11 +77,9 @@ void setup() {
     hall.setBaseline(sum / 50);
     Serial.printf("홀 기준값 %.1f mV · 잡힘 기준 %.1f mV\n", hall.baseline(), hall.threshold());
   }
-  if (S.carId >= 1 && S.carId <= 4) {
-    radioOk = radioBegin();
-    game = new rcar::Game(S.role, S.carId);
-    Serial.printf("ESP-NOW %s\n", radioOk ? "준비됨" : "시작 실패!");
-  }
+  radioOk = radioBegin(S.carId);  // Wi-Fi AP 는 차 번호와 상관없이 항상 (0번이면 RCAR-0)
+  Serial.printf("Wi-Fi AP·ESP-NOW %s\n", radioOk ? "준비됨" : "시작 실패!");
+  if (S.carId >= 1 && S.carId <= 4) game = new rcar::Game(S.role, S.carId);
 }
 
 void loop() {

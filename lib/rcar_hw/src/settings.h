@@ -11,6 +11,9 @@ struct CarSettings {
   float vbatK;
   float hallThresholdMv;
   uint32_t pwmHz;
+  char name[9];      // 화면 이름 (0~2글자, UTF-8 8바이트 이하 + 끝 0)
+  uint16_t gameSec;  // 게임 시간(초), 추격차가 마지막 값을 기억
+  float hallBase;    // 홀 기준값(mV), 0 = 없음
 };
 
 CarSettings settingsDefaults();

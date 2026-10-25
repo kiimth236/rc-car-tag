@@ -10,7 +10,7 @@ Message Game::make(MsgType t, uint32_t now) const {
   m.phase = (uint8_t)phase_;
   m.caught = caught_ ? 1 : 0;
   m.battDeciV = battDeciV_;
-  m.ms = (uint16_t)countdownMsLeft(now);
+  m.msLeft = countdownMsLeft(now);
   return m;
 }
 
@@ -79,7 +79,7 @@ void Game::onMessage(const Message& m, uint32_t now) {
       lastChaserSeen_ = now;
       Phase cp = (Phase)m.phase;
       if (cp == Phase::Countdown && m.round != round_) {
-        enterCountdown(m.round, now + m.ms, now);  // START 를 놓쳤어도 상태 알림으로 합류
+        enterCountdown(m.round, now + m.msLeft, now);  // START 를 놓쳤어도 상태 알림으로 합류
       } else if (phase_ != Phase::Idle && (cp == Phase::Idle || m.round != round_)) {
         phase_ = Phase::Idle;  // 추격차가 대기이거나 다른 판이면 지난 판 상태를 버림
         caught_ = false;
@@ -95,7 +95,7 @@ void Game::onMessage(const Message& m, uint32_t now) {
     if (t == MsgType::Start && fromRole == Role::Chaser) {
       lastChaserSeen_ = now;
       bool sameRoundRunning = m.round == round_ && (phase_ == Phase::Countdown || phase_ == Phase::Playing);
-      if (!sameRoundRunning) enterCountdown(m.round, now + m.ms, now);
+      if (!sameRoundRunning) enterCountdown(m.round, now + m.msLeft, now);
     } else if (t == MsgType::Ack && m.target == id_ && m.round == round_) {
       awaitingAck_ = false;
     }

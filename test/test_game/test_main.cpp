@@ -75,7 +75,7 @@ void test_start_repeats_for_300ms() {
 void test_runner_countdown_uses_remaining_ms() {
   Game r(Role::Runner, 2);
   Message s = makeMessage(MsgType::Start, 1, 1);
-  s.role = (uint8_t)Role::Chaser; s.phase = (uint8_t)Phase::Countdown; s.ms = 2800;  // 200ms 늦게 받음
+  s.role = (uint8_t)Role::Chaser; s.phase = (uint8_t)Phase::Countdown; s.msLeft = 2800;  // 200ms 늦게 받음
   r.onMessage(s, 5000);
   r.onMessage(status(1, Role::Chaser, Phase::Countdown, 1), 7700);  // 추격차가 계속 보임
   r.tick(7790);
@@ -107,7 +107,7 @@ void test_catch_stops_both_and_chaser_resumes_after_1s() {
 void test_caught_resent_until_ack() {
   Game r(Role::Runner, 2);
   Message s = makeMessage(MsgType::Start, 1, 1);
-  s.role = (uint8_t)Role::Chaser; s.ms = 0;
+  s.role = (uint8_t)Role::Chaser; s.msLeft = 0;
   r.onMessage(s, 0);
   Message chaserStatus = status(1, Role::Chaser, Phase::Playing, 1);
   r.onMessage(chaserStatus, 0);
@@ -196,7 +196,7 @@ void test_idle_runner_not_counted() {
 void test_runner_returns_idle_when_chaser_lost() {
   Game r(Role::Runner, 2);
   Message s = makeMessage(MsgType::Start, 1, 1);
-  s.role = (uint8_t)Role::Chaser; s.ms = 0;
+  s.role = (uint8_t)Role::Chaser; s.msLeft = 0;
   r.onMessage(s, 0);
   r.tick(10);
   TEST_ASSERT_EQUAL(Phase::Playing, r.phase());
@@ -232,7 +232,7 @@ void test_ignores_own_messages() {
 static Game playingRunner(uint32_t now) {
   Game r(Role::Runner, 2);
   Message s = makeMessage(MsgType::Start, 1, 1);
-  s.role = (uint8_t)Role::Chaser; s.ms = 0;
+  s.role = (uint8_t)Role::Chaser; s.msLeft = 0;
   r.onMessage(s, now);
   r.tick(now);
   return r;
@@ -251,7 +251,7 @@ void test_runner_missed_start_joins_countdown_from_status() {
   r.onHallTriggered(10);
   TEST_ASSERT_TRUE(r.caught());
   Message cs = status(1, Role::Chaser, Phase::Countdown, 2);  // START 는 못 받고 상태 알림만 받음
-  cs.ms = 2500;
+  cs.msLeft = 2500;
   r.onMessage(cs, 500);
   TEST_ASSERT_EQUAL(Phase::Countdown, r.phase());
   TEST_ASSERT_EQUAL_UINT16(2, r.round());

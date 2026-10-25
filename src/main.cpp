@@ -1,5 +1,5 @@
 /*
- * RC카 본 프로그램 — Dabble 조종 + ESP-NOW 술래잡기
+ * RC카 본 프로그램 — 폰 웹 조종(Wi-Fi) + ESP-NOW 술래잡기
  * 차 번호 · 역할 · 보정값은 점검 프로그램(car1_test)의 r · m · n · c · k 로 먼저 저장하세요.
  * 도주차는 자석이 없는 곳에서 켜세요 (켤 때 1초 동안 홀 센서 기준값을 잽니다).
  */
@@ -7,7 +7,6 @@
 #include <esp_system.h>
 #include "analog_inputs.h"
 #include "battery_monitor.h"
-#include "ble_control.h"
 #include "drive.h"
 #include "drive_math.h"
 #include "game.h"
@@ -19,6 +18,7 @@
 #include "rgb_led.h"
 #include "settings.h"
 #include "sonar.h"
+#include "web_control.h"
 
 static CarSettings S;
 static L298NMotor motorL(cfg::PIN_ENA, cfg::PIN_IN1, cfg::PIN_IN2, cfg::CH_MOTOR_L);
@@ -33,6 +33,13 @@ static rcar::HallDetector hall;
 static rcar::Game* game = nullptr;   // 차 번호가 정해졌을 때만 만듦
 static bool radioOk = false;
 static uint32_t nextHall = 0;
+
+// 폰 입력 (웹 명령을 게임에 잇기 전까지는 늘 "입력 없음" → 차는 서 있음)
+struct PadInput {
+  bool connected;
+  float throttle, steer;
+  bool startEdge;
+};
 
 static bool due(uint32_t now, uint32_t& next, uint32_t period) {
   if ((int32_t)(now - next) < 0) return false;
@@ -65,11 +72,6 @@ void setup() {
   if (rr == ESP_RST_BROWNOUT) blinkBoot({cfg::LED_LEVEL, 0, cfg::LED_LEVEL}, 3);  // 보라 3번
   if (S.carId == 0) Serial.println("[주의] 차 번호가 없습니다. car1_test 의 r 명령으로 정하세요 (지금은 주행만).");
 
-  char name[16];
-  snprintf(name, sizeof name, "RCAR-%u", S.carId);
-  bleBegin(name);
-  Serial.printf("BLE 이름: %s\n", name);
-
   if (S.role == rcar::Role::Runner) {
     hall.setThreshold(S.hallThresholdMv);
     float sum = 0;
@@ -79,12 +81,16 @@ void setup() {
   }
   radioOk = radioBegin(S.carId);  // Wi-Fi AP 는 차 번호와 상관없이 항상 (0번이면 RCAR-0)
   Serial.printf("Wi-Fi AP·ESP-NOW %s\n", radioOk ? "준비됨" : "시작 실패!");
+  webBegin();
+  Serial.printf("\xED\x8F\xB0: Wi-Fi RCAR-%u \xEC\xA0\x91\xEC\x86\x8D -> http://192.168.4.1\n", S.carId);  // "폰: ... 접속"
   if (S.carId >= 1 && S.carId <= 4) game = new rcar::Game(S.role, S.carId);
 }
 
 void loop() {
   uint32_t now = millis();
-  PadInput pad = blePoll();
+  PadInput pad{};  // 입력 없음 (정지)
+  rcar::WebCmd wc;
+  while (webPollCmd(wc)) {}  // 아직 쓰지 않음: 큐만 비움
 
   rcar::Message m;
   while (radioOk && radioReceive(m)) {
@@ -133,8 +139,8 @@ void loop() {
   }
 
   if (due(now, nextLog, 1000)) {
-    Serial.printf("BLE %s · 배터리 %.2fV (%d) · 단계 %d · 판 %u · 잡힘 %d · 앞 %.1fcm · 홀Δ %.1fmV\n",
-                  pad.connected ? "연결" : "대기", battery.filtered(), (int)battery.state(),
+    Serial.printf("\xED\x8F\xB0 %s · 배터리 %.2fV (%d) · 단계 %d · 판 %u · 잡힘 %d · 앞 %.1fcm · 홀Δ %.1fmV\n",
+                  webClientConnected() ? "연결" : "대기", battery.filtered(), (int)battery.state(),
                   game ? (int)game->phase() : -1, game ? game->round() : 0, game ? (int)game->caught() : 0,
                   frontCm, hall.delta());
   }

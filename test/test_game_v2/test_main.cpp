@@ -594,6 +594,87 @@ void test_runner_dismissed_over_stays_idle() {
   TEST_ASSERT_TRUE(r2.motorsEnabled(w.now));
 }
 
+void test_spectator_can_select_after_over() {
+  World w;
+  Game c(Role::Chaser, 1), r2(Role::Runner, 2), r4(Role::Runner, 4);
+  lobby(c); lobby(r2); lobby(r4);
+  w.put(1, &c); w.put(2, &r2); w.put(4, &r4);
+  w.step(500);
+  c.toggleParticipant(4, w.now);  // 4번 빼기 → 관전
+  TEST_ASSERT_TRUE(c.onStartPressed(w.now));
+  w.step(3500);
+  TEST_ASSERT_TRUE(r4.spectating());
+  r2.onHallTriggered(w.now);
+  w.step(300);
+  TEST_ASSERT_EQUAL(Phase::Over, r4.phase());
+  TEST_ASSERT_FALSE(r4.spectating());  // 판이 끝나면 관전도 끝 → 결과 화면에서 SELECT 가능
+  TEST_ASSERT_EQUAL(Winner::Chaser, r4.winner());
+  TEST_ASSERT_EQUAL(LedPattern::Caught, r4.led(w.now));  // 결과 LED 는 winner 로 정함
+  TEST_ASSERT_EQUAL(Phase::Over, c.phase());
+  r4.onSelect(w.now);
+  TEST_ASSERT_EQUAL(UiMode::Lobby, r4.mode());
+  TEST_ASSERT_EQUAL(Phase::Idle, r4.phase());
+  w.step(300);
+  TEST_ASSERT_EQUAL(Phase::Idle, r4.phase());  // 추격차가 아직 결과 화면이어도 다시 Over 로 가지 않음
+  TEST_ASSERT_FALSE(r4.spectating());
+}
+void test_over_keeps_remaining_time() {
+  World w;
+  Game c(Role::Chaser, 1), r2(Role::Runner, 2);
+  lobby(c); lobby(r2);
+  c.setGameSeconds(60);
+  w.put(1, &c); w.put(2, &r2);
+  w.step(500);
+  TEST_ASSERT_TRUE(c.onStartPressed(w.now));
+  uint32_t t0 = w.now;
+  w.stepTo(t0 + 3000 + 20000);  // 40초 남음
+  r2.onHallTriggered(w.now);
+  w.step(300);
+  TEST_ASSERT_EQUAL(Phase::Over, c.phase());
+  TEST_ASSERT_EQUAL(Phase::Over, r2.phase());
+  uint32_t left = c.msLeft(w.now);
+  TEST_ASSERT_UINT32_WITHIN(400, 40000, left);  // 끝난 순간의 남은 시간
+  w.step(2000);
+  TEST_ASSERT_EQUAL_UINT32(left, c.msLeft(w.now));  // 결과 화면 동안 멈춰 있음
+  int32_t d = (int32_t)r2.msLeft(w.now) - (int32_t)left;
+  TEST_ASSERT_TRUE(d >= -50 && d <= 50);
+  c.onSelect(w.now);
+  TEST_ASSERT_EQUAL_UINT32(0, c.msLeft(w.now));  // 대기로 가면 0
+}
+void test_over_time_up_reports_zero() {
+  World w;
+  Game c(Role::Chaser, 1), r2(Role::Runner, 2);
+  lobby(c); lobby(r2);
+  c.setGameSeconds(60);
+  w.put(1, &c); w.put(2, &r2);
+  w.step(500);
+  TEST_ASSERT_TRUE(c.onStartPressed(w.now));
+  w.step(3000 + 60000 + 300);
+  TEST_ASSERT_EQUAL(Phase::Over, c.phase());
+  TEST_ASSERT_EQUAL(Phase::Over, r2.phase());
+  TEST_ASSERT_EQUAL_UINT32(0, c.msLeft(w.now));
+  TEST_ASSERT_EQUAL_UINT32(0, r2.msLeft(w.now));
+}
+void test_chaser_outside_lobby_advertises_no_participants() {
+  World w;
+  Game c(Role::Chaser, 1), r2(Role::Runner, 2);
+  lobby(r2);
+  c.setPhoneOk(true);  // 추격차는 메뉴
+  w.put(1, &c); w.put(2, &r2);
+  w.step(500);
+  TEST_ASSERT_EQUAL_UINT8(carBit(2), c.eligibleMask(w.now));
+  TEST_ASSERT_EQUAL_UINT8(0, c.participantsMask(w.now));
+  TEST_ASSERT_EQUAL_UINT8(0, r2.participantsMask(w.now));  // 도주차 화면에도 참가 없음
+  c.setMode(UiMode::Solo);
+  w.step(300);
+  TEST_ASSERT_EQUAL_UINT8(0, c.participantsMask(w.now));
+  TEST_ASSERT_EQUAL_UINT8(0, r2.participantsMask(w.now));
+  c.setMode(UiMode::Lobby);
+  w.step(300);
+  TEST_ASSERT_EQUAL_UINT8(carBit(2), c.participantsMask(w.now));
+  TEST_ASSERT_EQUAL_UINT8(carBit(2), r2.participantsMask(w.now));
+}
+
 void setup() {
   delay(2000);
   UNITY_BEGIN();
@@ -625,6 +706,10 @@ void setup() {
   RUN_TEST(test_round_running_nearby_for_solo_car);
   RUN_TEST(test_step_game_seconds_clamps);
   RUN_TEST(test_runner_dismissed_over_stays_idle);
+  RUN_TEST(test_spectator_can_select_after_over);
+  RUN_TEST(test_over_keeps_remaining_time);
+  RUN_TEST(test_over_time_up_reports_zero);
+  RUN_TEST(test_chaser_outside_lobby_advertises_no_participants);
   UNITY_END();
 }
 

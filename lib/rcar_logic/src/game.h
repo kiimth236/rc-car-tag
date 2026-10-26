@@ -55,11 +55,11 @@ class Game {
   uint16_t gameSeconds() const { return gameSec_; }
   void toggleParticipant(uint8_t id, uint32_t now);  // 추격차·Lobby·Idle/Over 에서만, eligible 인 차만
   uint8_t eligibleMask(uint32_t now) const;          // 추격차: 고를 수 있는 도주차
-  uint8_t participantsMask(uint32_t now) const;      // 대기: eligible & ~제외, 판 중: 이번 판 참가
+  uint8_t participantsMask(uint32_t now) const;      // 대기: eligible & ~제외 (추격차가 Lobby 일 때만, 아니면 0), 판 중: 이번 판 참가
   uint8_t caughtMask() const { return caughtSet_; }
   Winner winner() const { return winner_; }
-  bool spectating() const { return spectating_; }  // 이번 판 관전
-  uint32_t msLeft(uint32_t now) const;  // 카운트다운이면 카운트다운 남은 ms, 게임 중이면 게임 남은 ms, 그 밖 0
+  bool spectating() const { return spectating_; }  // 이번 판 관전 (카운트다운·게임 중만, 결과 화면에서는 false)
+  uint32_t msLeft(uint32_t now) const;  // 카운트다운: 카운트다운 남은 ms, 게임 중: 게임 남은 ms, 결과: 끝난 순간 남은 ms, 대기 0
   bool roundRunningNearby(uint32_t now) const;  // 내가 또는 최근 본 추격차가 카운트다운·게임 중
   bool takeRejoined();  // 도주차가 이미 진행 중인 판(게임 중)에 상태 메시지로 들어왔으면 한 번 true
 
@@ -103,6 +103,7 @@ class Game {
   uint16_t gameSec_;
   char name_[kNameBytes + 1] = {};
   uint32_t countdownEnd_ = 0, gameEnd_ = 0, lockUntil_ = 0, nextStatus_ = 0;
+  uint32_t overMsLeft_ = 0;  // 결과 화면에 보일 남은 시간 (판이 끝난 순간 값)
   uint32_t startRepeatUntil_ = 0, nextStartRepeat_ = 0;
   bool awaitingAck_ = false;
   uint32_t nextCaughtResend_ = 0;

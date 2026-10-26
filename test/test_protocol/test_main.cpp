@@ -64,7 +64,7 @@ void test_v2_roundtrip_all_fields() {
   m.mode = (uint8_t)UiMode::Lobby; m.phoneOk = 1;
   m.participants = 0b01100; m.caughtMask = 0b00100;
   m.winner = (uint8_t)Winner::Runners; m.gameSec = 180; m.msLeft = 157000;
-  memcpy(m.name, "ë¯¼ì", 6);  // "민수"
+  memcpy(m.name, "\xeb\xaf\xbc\xec\x88\x98", 6);  // "민수"
   uint8_t buf[sizeof(Message)];
   TEST_ASSERT_EQUAL_UINT(30, encode(m, buf, sizeof buf));
   Message o;
@@ -77,6 +77,7 @@ void test_v2_roundtrip_all_fields() {
   TEST_ASSERT_EQUAL_UINT16(180, o.gameSec);
   TEST_ASSERT_EQUAL_UINT32(157000, o.msLeft);
   TEST_ASSERT_EQUAL_MEMORY(m.name, o.name, 8);
+  TEST_ASSERT_EQUAL_UINT8(0, o.name[6]);  // 6바이트 이름 뒤는 0
 }
 void test_old_magic_rejected() {
   Message m = makeMessage(MsgType::Status, 1, 0);

@@ -69,6 +69,7 @@ void Game::beginRound(uint16_t round, Phase p, uint32_t msLeft, uint32_t now) {
   caught_ = false;
   awaitingAck_ = false;
   winner_ = Winner::None;
+  overMsLeft_ = 0;
   lockUntil_ = now;
   lastChaserSeen_ = now;
 }
@@ -135,7 +136,11 @@ uint8_t Game::eligibleMask(uint32_t now) const {
 }
 
 uint8_t Game::participantsMask(uint32_t now) const {
-  if (role_ == Role::Chaser) return phase_ == Phase::Idle ? (uint8_t)(eligibleMask(now) & ~excluded_) : participants_;
+  if (role_ == Role::Chaser) {
+    if (phase_ != Phase::Idle) return participants_;
+    if (mode_ != UiMode::Lobby) return 0;  // 메뉴·혼자 놀기·이름 바꾸기: 판을 열지 않았으니 참가 없음
+    return (uint8_t)(eligibleMask(now) & ~excluded_);
+  }
   // 도주차: 추격차가 알려 준 값. 대기 중 추격차가 안 보이면 없음
   if (phase_ == Phase::Idle && reached(now, lastChaserSeen_ + cfg_.chaserLostMs)) return 0;
   return participants_;
@@ -215,6 +220,8 @@ void Game::runnerFollowChaser(const Message& m, uint32_t now) {
     } else if (running()) {
       phase_ = Phase::Over;  // 결과를 닫은 뒤(Idle)에는 다시 Over 로 가지 않음
       winner_ = (Winner)m.winner;
+      overMsLeft_ = m.msLeft;  // 끝난 순간 남은 시간 (추격차 기준)
+      spectating_ = false;     // 관전은 판이 끝날 때까지만 → 결과 화면에서 SELECT 로 대기
     }
     return;
   }
@@ -291,9 +298,11 @@ void Game::chaserTick(uint32_t now) {
       caughtSet_ |= b;
   }
   if ((participants_ & ~caughtSet_) == 0) {
+    overMsLeft_ = msLeft(now);  // 모두 잡음: 끝난 순간 남은 시간을 결과 화면에 그대로 둠
     phase_ = Phase::Over;
     winner_ = Winner::Chaser;
   } else if (reached(now, gameEnd_)) {
+    overMsLeft_ = 0;
     phase_ = Phase::Over;
     winner_ = Winner::Runners;
   }
@@ -356,6 +365,7 @@ uint32_t Game::countdownMsLeft(uint32_t now) const {
 
 uint32_t Game::msLeft(uint32_t now) const {
   if (phase_ == Phase::Countdown) return countdownMsLeft(now);
+  if (phase_ == Phase::Over) return overMsLeft_;  // 결과 화면: 끝난 순간의 남은 시간 (시간 끝 = 0)
   if (phase_ != Phase::Playing || reached(now, gameEnd_)) return 0;  // 도주차는 0에서 멈추고 추격차의 끝을 기다림
   return gameEnd_ - now;
 }

@@ -55,6 +55,9 @@
   .qty .multi { font-size: 3.1mm; line-height: 1.55; text-align: left; display: inline-block; }
   .qty .multi b { font-size: 3.6mm; }
   .qty .txt { font-size: 4.2mm; font-weight: 700; line-height: 1.2; }
+  .off { color: #c62828; }
+  tr.unused .ck { border-color: #e3b5b5; }
+  tr.unused .pic svg { opacity: .45; }
   tr.role td { background: var(--acc-soft); }
   tr.role .nm::after { content: " ★ 이 역할만"; color: var(--acc); font-size: 2.8mm; font-weight: 700; }
 
@@ -173,23 +176,23 @@ const ART = {
 const common = [
   { a: 'esp32', n: 'ESP32 DevKitC V4', s: 'WROOM-32D · CP2102. 차의 두뇌', q: 1 },
   { a: 'l298n', n: 'L298N 모터 드라이버', s: '빨간 기판 + 검은 방열판', q: 1 },
-  { a: 'tt', n: 'TT 기어모터', s: '앞바퀴 왼쪽 · 오른쪽', q: 2 },
+  { a: 'tt', n: 'TT 기어모터', s: '선 달린 것. 앞바퀴 왼쪽 · 오른쪽', q: 2 },
   { a: 'wheel', n: '바퀴 65mm', s: 'TT모터 축에 끼움', q: 2 },
   { a: 'caster', n: '볼캐스터', s: '뒤쪽 가운데', q: 1 },
   { a: 'cell', n: '18650 배터리', s: '보호회로 있는 셀', q: 2 },
-  { a: 'holder', n: '18650 2구 직렬 홀더', s: '2개 직렬 = 7.4V', q: 1 },
-  { a: 'fuse', n: '퓨즈 3A + 퓨즈 홀더', s: '배터리 + 선에 끼움', q: 1 },
-  { a: 'switch', n: '전원 스위치', s: 'DC 3A 이상 (작은 슬라이드 ✕)', q: 1 },
-  { a: 'breadboard', n: '미니 브레드보드', s: '5V · GND 레일 + 저항', q: 1 },
+  { a: 'holder', n: '18650 2구 직렬 홀더', s: '빨강·검정 선 달린 것. 2개 직렬 = 7.4V', q: 1 },
+  { a: 'fuse', n: '퓨즈 3A + 퓨즈 홀더', s: '안 씀 — 지금 구성에서 필요 없음', off: '안 씀' },
+  { a: 'switch', n: '전원 스위치', s: '안 씀 — 지금 구성에서 필요 없음', off: '안 씀' },
+  { a: 'breadboard', n: '미니 브레드보드', s: '5V · GND 레일', q: 1 },
   { a: 'cap470', n: '전해 커패시터 470µF', s: '10V 이상. 긴 다리 = +', q: 1 },
-  { a: 'cap104', n: '세라믹 커패시터 0.1µF', s: '"104" 표시. 모터마다 3 + 배터리 측정 1', q: 7 },
-  { a: 'res', n: '저항 4종', s: '100kΩ 갈검노 · 33kΩ 주주주 (배터리 측정)<br>1kΩ 갈검빨 · 2kΩ 빨검빨 (초음파)', q: '각 1' },
-  { a: 'sonar', n: 'HC-SR04 초음파 센서', s: '5V로 켬', q: 1 },
+  { a: 'cap104', n: '세라믹 커패시터 0.1µF', s: '안 씀 — 지금 구성에서 필요 없음', off: '안 씀' },
+  { a: 'res', n: '저항 4종', s: '안 씀 — 지금 구성에서 필요 없음', off: '안 씀' },
+  { a: 'sonar', n: 'HC-SR04 초음파 센서', s: '지금은 안 담 — 저항이 생기면 추가', off: '안 담' },
   { a: 'led', n: '3색 LED 모듈 (4핀)', s: '저항 내장. 상태 표시', q: 1 },
-  { a: 'wire', n: '22AWG 전선', s: '빨강 · 검정 한 줄씩. 배터리 · 모터 같은 큰 전류', q: '각 50cm' },
+  { a: 'wire', n: '22AWG 전선', s: '안 씀 — 지금 구성에서 필요 없음', off: '안 씀' },
 ];
 const jumper = (ff) => ({ a: 'jumper', n: '점퍼선 3종', s: '위부터 수-수 · 수-암 · 암-암',
-  multi: [['수-수', 3], ['수-암', 7], ['암-암', ff]] });
+  multi: [['수-수', 2], ['수-암', 3], ['암-암', ff]] });
 
 const pages = {
   run: {
@@ -198,7 +201,7 @@ const pages = {
     sum: '도주차는 <b>3대</b>입니다. 이 장을 <b>3장 인쇄</b>해서 봉투마다 한 장씩 넣고, ☐에 체크하며 담으세요. 추격차와 다른 점은 <b>KY-024 홀 센서</b>와 센서용 <b>암-암 점퍼 3개</b>입니다.',
     rows: [...common, jumper(13), { a: 'ky024', n: 'KY-024 홀 센서 모듈', s: '차 뒤쪽 끝 가운데. 자석을 감지 (A0 핀 있는 것. KY-003 ✕)', q: 1, role: true }],
     notes: [
-      '<b>점퍼선 개수:</b> 수-수 3 = 5V 레일 2 + 배터리 측정 1 · 수-암 7 = ESP32 전원 2 + 배터리 측정 1 + 초음파 4 · 암-암 13 = 모터 신호 6 + LED 4 + <b>KY-024 3</b>',
+      '<b>점퍼선 개수:</b> 수-수 2 = 5V 레일 2 · 수-암 3 = ESP32 전원 2 + GPIO34→GND 1 · 암-암 13 = 모터 신호 6 + LED 4 + <b>KY-024 3</b>',
       '<b>⚠ KY-024는 3.3V로 켭니다</b> (ESP32 3V3 핀). D0 핀은 연결하지 않습니다.<br><b>따로 준비:</b> 인두·납, 멀티미터, 양면테이프·글루건 (센서 고정)',
     ],
   },
@@ -208,7 +211,7 @@ const pages = {
     sum: '추격차는 <b>1대</b>입니다. 이 장을 1장 인쇄해서 봉투에 넣고, ☐에 체크하며 담으세요. 도주차와 다른 점은 앞범퍼의 <b>네오디뮴 자석</b>이고, KY-024는 <b>필요 없습니다</b>.',
     rows: [...common, jumper(10), { a: 'magnet', n: '네오디뮴 원형 자석', s: '지름 20 × 두께 10mm, N42 이상. 앞범퍼 끝 가운데', q: 1, role: true }],
     notes: [
-      '<b>점퍼선 개수:</b> 수-수 3 = 5V 레일 2 + 배터리 측정 1 · 수-암 7 = ESP32 전원 2 + 배터리 측정 1 + 초음파 4 · 암-암 10 = 모터 신호 6 + LED 4',
+      '<b>점퍼선 개수:</b> 수-수 2 = 5V 레일 2 · 수-암 3 = ESP32 전원 2 + GPIO34→GND 1 · 암-암 10 = 모터 신호 6 + LED 4',
       '<b>⚠ 자석 주의:</b> 서로 붙을 때 손가락이 끼일 수 있고 쉽게 깨집니다. 폰·카드에서 멀리 두세요.<br><b>따로 준비:</b> 인두·납, 멀티미터, 양면테이프·글루건 (자석 고정)',
     ],
   },
@@ -221,11 +224,11 @@ const resArt = S(`${[['1', '0', '4', 14], ['3', '3', '3', 34], ['1', '0', '2', 5
 
 function row(r) {
   const art = r.a === 'res' ? resArt : ART[r.a];
-  const qty = r.multi
+  const qty = r.off ? `<span class="txt off">${r.off}</span>` : r.multi
     ? `<span class="multi">${r.multi.map(([k, v]) => `${k} <b>${v}</b>`).join('<br>')}</span>`
     : typeof r.q === 'string' ? `<span class="txt">${r.q}</span>` : `<b>${r.q}</b><small>개</small>`;
-  return `<tr class="${r.role ? 'role' : ''}"><td class="c"><div class="ck"></div></td><td class="pic">${art}</td>
-    <td><div class="nm">${r.n}</div><div class="sp">${r.s}</div></td><td class="c qty">${qty}</td></tr>`;
+  return `<tr class="${r.role ? 'role' : ''}${r.off ? ' unused' : ''}"><td class="c"><div class="ck"></div></td><td class="pic">${art}</td>
+    <td><div class="nm${r.off ? ' off' : ''}">${r.n}</div><div class="sp${r.off ? ' off' : ''}">${r.s}</div></td><td class="c qty">${qty}</td></tr>`;
 }
 function table(rows) {
   return `<table><colgroup><col class="chk"><col class="pic"><col><col class="qty"></colgroup>
@@ -254,14 +257,9 @@ const sw = (c) => `<span class="sw"><i style="background:${COL[c]}"></i>${c}</sp
 const WIRES = [
   ['수-수', 'P3', 'L298N +5V → 브레드보드 5V 레일', '주황'],
   ['수-수', 'P4', 'L298N GND → 브레드보드 GND 레일', '검정'],
-  ['수-수', '(가)', 'L298N +12V → 100kΩ (배터리 측정)', '빨강'],
   ['수-암', 'P5', '5V 레일 → ESP32 5V', '주황'],
   ['수-암', 'P6', 'GND 레일 → ESP32 GND', '검정'],
-  ['수-암', 'S13', '분압 가운데 → GPIO34', '보라'],
-  ['수-암', '—', '5V 레일 → 초음파 VCC', '주황'],
-  ['수-암', '—', 'GND 레일 → 초음파 GND', '검정'],
-  ['수-암', 'S8', 'GPIO18 → 초음파 Trig', '노랑'],
-  ['수-암', 'S9', '초음파 Echo 분압 → GPIO19', '초록'],
+  ['수-암', 'S13', 'GPIO34 → GND 레일 (배터리 측정 안 함)', '검정'],
   ['암-암', 'S1', 'GPIO25 → L298N ENA', '갈색'],
   ['암-암', 'S2', 'GPIO26 → L298N IN1', '노랑'],
   ['암-암', 'S3', 'GPIO27 → L298N IN2', '초록'],
@@ -310,9 +308,10 @@ document.getElementById('p-wire').innerHTML = `
           ${['수-수', '수-암', '암-암'].map((t) => `<tr class="sum"><td></td><td colspan="2">${t} 합계</td>
             <td class="n">${sumBy(t, 'chase')}</td><td class="n">${sumBy(t, 'run')}</td><td class="n tot">${sumBy(t, 'chase') + 3 * sumBy(t, 'run')}</td></tr>`).join('')}</tbody></table>
       <div class="rules"><b>색 규칙</b><br>
-        ${sw('주황')} = 5V · ${sw('검정')} = GND · ${sw('빨강')} = 배터리 쪽(7.4V) · ${sw('흰색')} = 3.3V<br>
+        ${sw('주황')} = 5V · ${sw('검정')} = GND · ${sw('흰색')} = 3.3V<br>
         모터 신호 S1~S6 = 갈 → 노 → 초 → 파 → 보 → 회 순서<br>
         LED = 핀 이름대로 (R 빨강 · G 초록 · B 파랑 · − 검정)<br>
+        <b>⚠ GPIO34는 GND에 연결</b> — 배터리 + 선을 꽂으면 ESP32 고장<br>
         <b>⚠ 흰색(3.3V)과 주황(5V)은 절대 바꾸지 마세요</b> — KY-024에 5V가 들어가면 ESP32 핀이 망가질 수 있어요.<br>
         회색·흰색이 없으면 남는 색으로 바꿔도 되지만, 4대 모두 같게.</div>
     </div>

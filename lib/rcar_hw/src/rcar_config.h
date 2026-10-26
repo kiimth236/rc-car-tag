@@ -34,6 +34,8 @@ constexpr float VBAT_K_DEFAULT = (100000.0f + 33000.0f) / 33000.0f;  // 약 4.03
 // 초음파
 constexpr uint32_t ECHO_TIMEOUT_US = 12000;  // 약 2m
 constexpr uint32_t SONAR_PERIOD_MS = 60;
+// 초음파 센서를 달면 true. false 면 초음파를 쏘지 않음 (앞 거리 = 미검출, 앞 거리 제한 없음)
+constexpr bool SONAR_INSTALLED = false;
 // 홀 센서
 constexpr float HALL_THRESHOLD_MV_DEFAULT = 30.0f;
 // LED

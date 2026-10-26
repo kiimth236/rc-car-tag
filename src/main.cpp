@@ -153,7 +153,7 @@ void setup() {
   Serial.begin(115200);
   ledBegin();
   analogInputsBegin();
-  sonarBegin();
+  if (cfg::SONAR_INSTALLED) sonarBegin();
   S = settingsLoad();
   motorL.begin(S.pwmHz);
   motorR.begin(S.pwmHz);
@@ -237,7 +237,9 @@ void loop() {
   }
 
   // 초음파: 추격차는 항상. 도주차는 혼자 놀기이고 주변에 진행 중인 판이 없을 때만 (소리가 섞이지 않게)
-  bool sonarOn = S.role == rcar::Role::Chaser || (g.mode() == rcar::UiMode::Solo && !g.roundRunningNearby(now));
+  // 센서를 달지 않은 구성(cfg::SONAR_INSTALLED = false)에서는 아예 쏘지 않음 → frontCm = −1 ("--", 앞 거리 제한 없음)
+  bool sonarOn = cfg::SONAR_INSTALLED &&
+                 (S.role == rcar::Role::Chaser || (g.mode() == rcar::UiMode::Solo && !g.roundRunningNearby(now)));
   if (!sonarOn) {
     frontCm = -1;
     sonarHist[0] = sonarHist[1] = sonarHist[2] = -1;  // 다시 쏠 때 옛 값이 섞이지 않게

@@ -2,6 +2,7 @@
 #include <WiFi.h>
 #include <esp_now.h>
 #include <esp_wifi.h>
+#include <stdio.h>
 #include <string.h>
 #include "rcar_config.h"
 
@@ -15,10 +16,15 @@ static void onRecv(const uint8_t* mac, const uint8_t* data, int len) {
   if (len > 0 && rcar::decode(data, (size_t)len, rcar::kTeamMagic, m)) xQueueSend(s_queue, &m, 0);
 }
 
-bool radioBegin() {
+bool radioBegin(uint8_t carId) {
   s_queue = xQueueCreate(16, sizeof(rcar::Message));
-  WiFi.mode(WIFI_STA);  // BLE 와 함께 쓸 때 ESP-NOW 수신은 STA 모드에서만 안정
-  WiFi.disconnect();
+  WiFi.persistent(false);  // AP 설정을 매번 NVS 에 쓰지 않고, 예전 STA 설정이 채널을 끌고 가지 않게
+  WiFi.mode(WIFI_AP_STA);  // AP = 폰 접속, STA 인터페이스 = ESP-NOW broadcast
+  char ssid[16], pass[16];
+  snprintf(ssid, sizeof ssid, "RCAR-%u", carId);
+  snprintf(pass, sizeof pass, "%s%u", cfg::AP_PASS_PREFIX, carId);  // 8글자 (WPA2 최소)
+  if (!WiFi.softAP(ssid, pass, cfg::WIFI_CHANNEL, 0, cfg::AP_MAX_CLIENTS)) return false;
+  esp_wifi_set_bandwidth(WIFI_IF_AP, WIFI_BW_HT20);
   esp_wifi_set_channel(cfg::WIFI_CHANNEL, WIFI_SECOND_CHAN_NONE);
   if (esp_now_init() != ESP_OK) return false;
   esp_now_register_recv_cb(onRecv);

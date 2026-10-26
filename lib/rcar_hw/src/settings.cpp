@@ -1,6 +1,9 @@
 #include "settings.h"
 #include <Preferences.h>
+#include <string.h>
 #include "rcar_config.h"
+#include "names.h"
+#include "game.h"
 
 CarSettings settingsDefaults() {
   CarSettings s;
@@ -11,6 +14,9 @@ CarSettings settingsDefaults() {
   s.vbatK = cfg::VBAT_K_DEFAULT;
   s.hallThresholdMv = cfg::HALL_THRESHOLD_MV_DEFAULT;
   s.pwmHz = cfg::MOTOR_PWM_HZ_DEFAULT;
+  s.name[0] = 0;
+  s.gameSec = cfg::GAME_SEC_DEFAULT;
+  s.hallBase = 0;
   return s;
 }
 
@@ -37,7 +43,13 @@ CarSettings settingsLoad() {
   s.vbatK = p.getFloat("k", s.vbatK);
   s.hallThresholdMv = p.getFloat("hallTh", s.hallThresholdMv);
   s.pwmHz = p.getUInt("pwmHz", s.pwmHz);
+  char nm[rcar::kNameBytes + 1] = {0};
+  p.getString("name", nm, sizeof nm);
+  s.gameSec = p.getUShort("gameSec", 0);
+  s.hallBase = p.getFloat("hallBase", 0);
   p.end();
+  if (rcar::validName(nm)) memcpy(s.name, nm, sizeof nm); else s.name[0] = 0;
+  s.gameSec = s.gameSec == 0 ? cfg::GAME_SEC_DEFAULT : rcar::stepGameSeconds(s.gameSec, 0);
   if (s.carId > 4) s.carId = 0;
   if ((uint8_t)s.role > 1) s.role = rcar::Role::Runner;
   return s;
@@ -55,6 +67,9 @@ void settingsSave(const CarSettings& s) {
   p.putFloat("k", s.vbatK);
   p.putFloat("hallTh", s.hallThresholdMv);
   p.putUInt("pwmHz", s.pwmHz);
+  p.putString("name", s.name);
+  p.putUShort("gameSec", s.gameSec);
+  p.putFloat("hallBase", s.hallBase);
   p.end();
 }
 

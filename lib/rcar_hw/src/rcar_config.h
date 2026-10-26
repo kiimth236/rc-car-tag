@@ -27,7 +27,7 @@ constexpr float STEER_GAIN = 0.6f;
 constexpr bool PAD_INVERT_Y = false;  // 조이스틱 위가 후진이면 true
 constexpr uint32_t BRAKE_HOLD_MS = 150;
 // 폰 입력이 이 시간 동안 안 오면 정지 (설계서 6장 "0.5초 동안 새 명령 없음").
-// Dabble 앱이 조이스틱을 가만히 둘 때 값을 보내지 않아 차가 뚝뚝 끊기면 0 으로 (BLE 연결만 확인).
+// 폰 웹 조이스틱 입력이 끊기면 차가 계속 달리지 않도록 이 시간 뒤 정지.
 constexpr uint32_t PAD_RX_TIMEOUT_MS = 500;
 // 배터리
 constexpr float VBAT_K_DEFAULT = (100000.0f + 33000.0f) / 33000.0f;  // 약 4.03
@@ -41,4 +41,12 @@ constexpr bool LED_COMMON_ANODE = false;
 constexpr uint8_t LED_LEVEL = 80;
 // 무선
 constexpr uint8_t WIFI_CHANNEL = 1;
+constexpr const char* AP_PASS_PREFIX = "rcartag";  // 비밀번호 = 이 글자 + 차 번호 (8글자)
+constexpr int AP_MAX_CLIENTS = 1;
+constexpr uint16_t HTTP_PORT = 80, WS_PORT = 81;
+constexpr uint32_t PHONE_GRACE_MS = 3000;          // 폰이 이만큼 끊겨도 phoneOk 유지
+constexpr uint32_t UI_PUSH_MS = 100;               // 상태를 폰에 보내는 주기
+// 게임
+constexpr uint32_t RUNNER_OFFLINE_CATCH_MS = 10000;  // 꺼진 참가 도주차는 이 시간 뒤 잡힌 것으로 (Game 설정에 넘김)
+constexpr uint16_t GAME_SEC_DEFAULT = 180;
 }  // namespace cfg

@@ -564,7 +564,9 @@ void cmdRole(const String& arg) {
   S.carId = (uint8_t)id;
   S.role = chaser ? rcar::Role::Chaser : rcar::Role::Runner;
   settingsSave(S);
-  Serial.printf("저장: %d번 차, %s. BLE 이름은 RCAR-%d 가 됩니다.\n", id, chaser ? "추격차" : "도주차", id);
+  // "저장: N번 차, 추격차. 폰 Wi-Fi 이름은 RCAR-N, 비밀번호는 rcartagN 가 됩니다."
+  Serial.printf("\xEC\xA0\x80\xEC\x9E\xA5: %d\xEB\xB2\x88 \xEC\xB0\xA8, %s. \xED\x8F\xB0 Wi-Fi \xEC\x9D\xB4\xEB\xA6\x84\xEC\x9D\x80 RCAR-%d, \xEB\xB9\x84\xEB\xB0\x80\xEB\xB2\x88\xED\x98\xB8\xEB\x8A\x94 %s%d \xEA\xB0\x80 \xEB\x90\xA9\xEB\x8B\x88\xEB\x8B\xA4.\n", id,
+                chaser ? "\xEC\xB6\x94\xEA\xB2\xA9\xEC\xB0\xA8" : "\xEB\x8F\x84\xEC\xA3\xBC\xEC\xB0\xA8", id, cfg::AP_PASS_PREFIX, id);
 }
 
 void cmdPwm(const String& arg) {

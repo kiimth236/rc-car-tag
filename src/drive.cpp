@@ -12,12 +12,14 @@ void Drive::brakeNow(uint32_t now) {
 
 void Drive::update(uint32_t now, float vbat, float distCm, bool enabled) {
   if (braking_) {
+    blocked_ = false;
     if ((int32_t)(now - brakeUntil_) < 0) return;
     braking_ = false;
     l_.coast();
     r_.coast();
   }
   float thr = enabled ? rcar::limitForward(thr_, distCm, cfg::SLOW_CM, cfg::STOP_CM, cfg::SLOW_FACTOR) : 0.0f;
+  blocked_ = enabled && thr_ > 0.0f && thr == 0.0f;
   float st = enabled ? steer_ : 0.0f;
   float lf, rf;
   rcar::mixTank(thr, st, lf, rf);

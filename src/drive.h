@@ -11,6 +11,9 @@ class Drive {
   // 10ms 마다. distCm < 0 = 전진 제한 없음
   void update(uint32_t now, float vbat, float distCm, bool enabled);
   void brakeNow(uint32_t now);
+  int dutyL() const { return curL_; }  // 지금 나가는 듀티 (−255~255, 부호 = 방향). 정지·급정지 0
+  int dutyR() const { return curR_; }
+  bool frontBlocked() const { return blocked_; }  // 마지막 update: 앞으로 가라는데 앞 거리 제한으로 0
 
  private:
   L298NMotor& l_;
@@ -19,5 +22,6 @@ class Drive {
   float thr_ = 0, steer_ = 0;
   int curL_ = 0, curR_ = 0;
   bool braking_ = false;
+  bool blocked_ = false;
   uint32_t brakeUntil_ = 0;
 };

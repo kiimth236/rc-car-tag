@@ -28,6 +28,8 @@ bool decode(const uint8_t* data, size_t len, uint16_t expectedMagic, Message& ou
   if (m.from < 1 || m.from > 4) return false;
   if (m.role > (uint8_t)Role::Runner) return false;
   if (m.phase > (uint8_t)Phase::Over) return false;
+  if (m.mode > (uint8_t)UiMode::Rename) return false;
+  if (m.winner > (uint8_t)Winner::Runners) return false;
   out = m;
   return true;
 }

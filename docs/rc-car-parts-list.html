@@ -16,6 +16,13 @@
   .page { width: 190mm; height: 278mm; margin: 0 auto; display: flex; flex-direction: column;
     page-break-after: always; break-after: page; overflow: hidden; }
   .page:last-child { page-break-after: auto; break-after: auto; }
+  /* 화면으로 볼 때만: PDF처럼 A4 종이를 한 장씩 나눠 보이기 (인쇄에는 영향 없음) */
+  @media screen {
+    html, body { background: #e3e6ec; }
+    body { padding: 8mm 0; }
+    .page { box-sizing: content-box; background: #fff; padding: 9mm 10mm; margin: 0 auto 8mm;
+      box-shadow: 0 1mm 4mm rgba(0, 0, 0, .18); border-radius: 1mm; }
+  }
   .run { --acc: var(--run); --acc-soft: var(--run-soft); }
   .chase { --acc: var(--chase); --acc-soft: var(--chase-soft); }
 

@@ -55,12 +55,33 @@
   .note { background: var(--soft); border-radius: 2mm; padding: 2mm 3mm; }
   .note.warn { background: var(--acc-soft); }
   .note b { color: var(--ink); }
+
+  /* 3쪽: 점퍼선 색 */
+  .wire { --acc: #1e4fa3; --acc-soft: #e8eefb; }
+  .wgrid { flex: 1; display: grid; grid-template-columns: 1.12fr 1fr; column-gap: 4mm; align-items: start; }
+  .wt td { height: auto; padding: 1.15mm 1mm; font-size: 2.9mm; line-height: 1.3; }
+  .wt th { font-size: 2.8mm; }
+  .wt .id { font-weight: 700; white-space: nowrap; }
+  .wt .ty { color: var(--sub); white-space: nowrap; }
+  .wt tr.grp td { border-top: 0.45mm solid var(--ink); }
+  .wt tr.only td { background: var(--run-soft); }
+  .sw { display: inline-flex; align-items: center; gap: 1.4mm; white-space: nowrap; font-weight: 700; }
+  .sw i { width: 7mm; height: 2.6mm; border-radius: 1.3mm; border: 0.25mm solid #555; display: inline-block; }
+  .ct td { height: auto; padding: 1.05mm 1mm; font-size: 3mm; }
+  .ct td.n { text-align: center; font-weight: 700; font-size: 3.4mm; }
+  .ct td.n.tot { background: var(--acc-soft); }
+  .ct tr.grp td { border-top: 0.45mm solid var(--ink); }
+  .ct tr.sum td { font-weight: 700; font-size: 3mm; background: var(--soft); }
+  .ct tbody tr.sum:nth-last-child(3) td { border-top: 0.45mm solid var(--ink); }
+  .rules { margin-top: 3mm; background: var(--acc-soft); border-radius: 2mm; padding: 2.2mm 3mm; font-size: 2.9mm; line-height: 1.6; }
+  .rules b { color: var(--ink); }
 </style>
 </head>
 <body>
 
 <section class="page run" id="p-run"></section>
 <section class="page chase" id="p-chase"></section>
+<section class="page wire" id="p-wire"></section>
 
 <script>
 /* ---------- 부품 그림 (모듈 기준, 실제 모양을 단순하게) ---------- */
@@ -215,6 +236,80 @@ for (const [key, p] of Object.entries(pages)) {
     <div class="grid">${table(p.rows.slice(0, half))}${table(p.rows.slice(half))}</div>
     <footer>${p.notes.map((n, i) => `<div class="note ${i ? 'warn' : ''}">${n}</div>`).join('')}</footer>`;
 }
+
+/* ---------- 3쪽: 점퍼선 색 (4대 모두 같은 색으로) ---------- */
+const COL = {
+  주황: '#f08a00', 검정: '#1f2328', 빨강: '#d32f2f', 보라: '#7c3aed', 노랑: '#f2c230',
+  초록: '#2e9d4f', 갈색: '#7a4a1e', 파랑: '#1e63c6', 회색: '#9aa1ab', 흰색: '#ffffff',
+};
+const sw = (c) => `<span class="sw"><i style="background:${COL[c]}"></i>${c}</span>`;
+// [종류, 선 번호, 연결, 색, 도주차만]
+const WIRES = [
+  ['수-수', 'P3', 'L298N +5V → 브레드보드 5V 레일', '주황'],
+  ['수-수', 'P4', 'L298N GND → 브레드보드 GND 레일', '검정'],
+  ['수-수', '(가)', 'L298N +12V → 100kΩ (배터리 측정)', '빨강'],
+  ['수-암', 'P5', '5V 레일 → ESP32 5V', '주황'],
+  ['수-암', 'P6', 'GND 레일 → ESP32 GND', '검정'],
+  ['수-암', 'S13', '분압 가운데 → GPIO34', '보라'],
+  ['수-암', '—', '5V 레일 → 초음파 VCC', '주황'],
+  ['수-암', '—', 'GND 레일 → 초음파 GND', '검정'],
+  ['수-암', 'S8', 'GPIO18 → 초음파 Trig', '노랑'],
+  ['수-암', 'S9', '초음파 Echo 분압 → GPIO19', '초록'],
+  ['암-암', 'S1', 'GPIO25 → L298N ENA', '갈색'],
+  ['암-암', 'S2', 'GPIO26 → L298N IN1', '노랑'],
+  ['암-암', 'S3', 'GPIO27 → L298N IN2', '초록'],
+  ['암-암', 'S4', 'GPIO13 → L298N ENB', '파랑'],
+  ['암-암', 'S5', 'GPIO32 → L298N IN3', '보라'],
+  ['암-암', 'S6', 'GPIO33 → L298N IN4', '회색'],
+  ['암-암', 'S10', 'GPIO21 → LED R', '빨강'],
+  ['암-암', 'S11', 'GPIO22 → LED G', '초록'],
+  ['암-암', 'S12', 'GPIO23 → LED B', '파랑'],
+  ['암-암', '—', 'ESP32 GND → LED −', '검정'],
+  ['암-암', 'H1', '3V3 → KY-024 +', '흰색', true],
+  ['암-암', 'H2', 'GND → KY-024 G', '검정', true],
+  ['암-암', 'H3', 'VP(GPIO36) → KY-024 A0', '노랑', true],
+];
+const wireRows = WIRES.map((w, i) => {
+  const grp = i > 0 && WIRES[i - 1][0] !== w[0] ? ' grp' : '';
+  return `<tr class="${w[4] ? 'only' : ''}${grp}"><td class="ty">${w[0]}</td><td class="id">${w[1]}</td>
+    <td>${w[2]}${w[4] ? ' <b style="color:var(--run)">(도주차만)</b>' : ''}</td><td>${sw(w[3])}</td></tr>`;
+}).join('');
+// 위 표에서 종류·색별로 셈 (추격차 = 도주차만 빼고, 4대 = 추격 1 + 도주 3)
+const counts = [];
+for (const w of WIRES) {
+  let c = counts.find((x) => x.ty === w[0] && x.col === w[3]);
+  if (!c) counts.push(c = { ty: w[0], col: w[3], chase: 0, run: 0 });
+  if (!w[4]) c.chase++;
+  c.run++;
+}
+const sumBy = (ty, k) => counts.filter((c) => c.ty === ty).reduce((a, c) => a + c[k], 0);
+const countRows = counts.map((c, i) => {
+  const grp = i > 0 && counts[i - 1].ty !== c.ty ? ' class="grp"' : '';
+  return `<tr${grp}><td class="c"><div class="ck"></div></td><td class="ty">${c.ty}</td><td>${sw(c.col)}</td>
+    <td class="n">${c.chase || '—'}</td><td class="n">${c.run}</td><td class="n tot">${c.chase + 3 * c.run}</td></tr>`;
+}).join('');
+document.getElementById('p-wire').innerHTML = `
+  <header>
+    <div class="badge"><b>점퍼선</b><span>4대 공통 색</span></div>
+    <div class="head-main"><h1>점퍼선 색 정하기</h1><div class="sum">선마다 색을 정해 두면 꽂을 때와 점검할 때 헷갈리지 않아요. <b>4대 모두 같은 색</b>으로 맞추세요. 선 번호(P·S·H)는 배선 가이드의 전체 연결표와 같습니다.</div></div>
+  </header>
+  <div class="wgrid">
+    <table class="wt"><colgroup><col style="width:11mm"><col style="width:9mm"><col><col style="width:19mm"></colgroup>
+      <thead><tr><th>종류</th><th>선</th><th>연결</th><th>색</th></tr></thead><tbody>${wireRows}</tbody></table>
+    <div>
+      <table class="ct"><colgroup><col style="width:6mm"><col style="width:11mm"><col><col style="width:12mm"><col style="width:12mm"><col style="width:13mm"></colgroup>
+        <thead><tr><th class="c">✓</th><th>종류</th><th>색</th><th class="c">추격차<br>1대</th><th class="c">도주차<br>1대</th><th class="c">4대<br>합계</th></tr></thead>
+        <tbody>${countRows}
+          ${['수-수', '수-암', '암-암'].map((t) => `<tr class="sum"><td></td><td colspan="2">${t} 합계</td>
+            <td class="n">${sumBy(t, 'chase')}</td><td class="n">${sumBy(t, 'run')}</td><td class="n tot">${sumBy(t, 'chase') + 3 * sumBy(t, 'run')}</td></tr>`).join('')}</tbody></table>
+      <div class="rules"><b>색 규칙</b><br>
+        ${sw('주황')} = 5V · ${sw('검정')} = GND · ${sw('빨강')} = 배터리 쪽(7.4V) · ${sw('흰색')} = 3.3V<br>
+        모터 신호 S1~S6 = 갈 → 노 → 초 → 파 → 보 → 회 순서<br>
+        LED = 핀 이름대로 (R 빨강 · G 초록 · B 파랑 · − 검정)<br>
+        <b>⚠ 흰색(3.3V)과 주황(5V)은 절대 바꾸지 마세요</b> — KY-024에 5V가 들어가면 ESP32 핀이 망가질 수 있어요.<br>
+        회색·흰색이 없으면 남는 색으로 바꿔도 되지만, 4대 모두 같게.</div>
+    </div>
+  </div>`;
 </script>
 </body>
 </html>

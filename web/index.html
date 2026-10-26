@@ -320,9 +320,12 @@ document.addEventListener('visibilitychange',onVis);
 addEventListener('pagehide',()=>{clearTimeout(retryT);drop(false)});
 addEventListener('pageshow',()=>openWs());
 
+let offSince=0;
 // 50ms마다 조이스틱 (가운데·LOCK 이어도 J 0 0 — 연결 확인용)
 setInterval(()=>{
   if(DEMO||document.hidden)return;
+  if(online)offSince=0;else if(!offSince)offSince=Date.now();
+  else if(Date.now()-offSince>1000)release();   // 1초 넘게 끊기면 손 뗀 걸로 → 재연결 때 저절로 출발 안 함
   if(ws&&Date.now()-lastRx>3000){drop(true);return}   // 3초 동안 아무것도 못 받음 → 다시 연결
   if(!ws||ws.readyState!==1||ws.bufferedAmount>256)return;   // 밀린 입력은 쌓지 않음
   const drive=online&&S&&!isLocked(S)&&(S.mode==='solo'||S.mode==='lobby');

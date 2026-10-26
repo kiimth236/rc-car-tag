@@ -53,12 +53,13 @@ pre{background:var(--part);border:1px solid var(--line);border-radius:8px;paddin
     <li><a href="#d9">차별 설정 (NVS)</a></li>
     <li><a href="#d10">시험 계획</a></li>
     <li><a href="#d11">아직 실물로 정할 것 · 범위 밖</a></li>
+    <li><a href="#d12">폰 웹 조종 화면 사용법</a></li>
   </ol>
 </section>
 
 <section id="d0">
   <h2>1. 결정 기록 — 무엇이 바뀌었나</h2>
-  <div class="sum"><b>요약</b> — 모터 드라이버를 L298N으로 바꾸고, 벅 컨버터를 없애고, 잡힘 판정을 "초음파 20cm"에서 <b>"추격차 자석 + 도주차 홀 센서 3~5cm"</b>로 바꿨습니다. BLE 조종(Dabble)과 ESP-NOW, LED, 배터리 측정은 그대로입니다.</div>
+  <div class="sum"><b>요약</b> — 모터 드라이버를 L298N으로 바꾸고, 벅 컨버터를 없애고, 잡힘 판정을 "초음파 20cm"에서 <b>"추격차 자석 + 도주차 홀 센서 3~5cm"</b>로 바꿨습니다. ESP-NOW, LED, 배터리 측정은 그대로입니다. 조종은 앱 대신 <b>폰 웹 조종 화면</b>으로 바꿨고, 게임에 제한 시간·우승·참가 고르기가 생겼습니다(8장·13장).</div>
   <div class="tw"><table>
     <tr><th>항목</th><th>v2.1 (이전)</th><th>이번 설계</th><th>이유</th></tr>
     <tr><td>모터 드라이버</td><td>TB6612FNG</td><td><b>L298N</b> (4대 모두)</td><td>팀장 결정 (2026-10-15)</td></tr>
@@ -79,7 +80,7 @@ pre{background:var(--part);border:1px solid var(--line);border-radius:8px;paddin
   <div class="sum"><b>요약</b> — 4대가 같은 펌웨어로 돌고, 폰으로 조종하고, 추격차가 도주차 뒤 3~5cm까지 다가가면 부딪치지 않고 "잡힘"이 되면 성공입니다. 마감은 2026-12-06(일)입니다.</div>
   <ol>
     <li>4대 모두 <b>같은 펌웨어 파일</b>. 차 번호·역할은 NVS 설정으로만 다름.</li>
-    <li>폰(Dabble)으로 전진·후진·회전이 부드럽게 됨. 출발·방향 전환 때 <b>ESP32가 재부팅되지 않음</b>.</li>
+    <li>폰 브라우저(웹 조종 화면)로 전진·후진·회전이 부드럽게 됨. 출발·방향 전환 때 <b>ESP32가 재부팅되지 않음</b>.</li>
     <li>추격차 자석이 도주차 뒤 센서에서 <b>3~5cm</b> 안에 들어오면 잡힘. 6cm 이상에서는 잡히지 않음.</li>
     <li>잡히면 두 차가 <b>0.1초 안에</b> 함께 멈춤. 도주차는 그 판이 끝날 때까지 정지, 추격차는 1초 뒤 다시 주행.</li>
     <li>도주차가 모두 잡히면 끝나고, 추격차 START로 다시 시작.</li>
@@ -127,7 +128,7 @@ pre{background:var(--part);border:1px solid var(--line);border-radius:8px;paddin
     <tr><td><code>led</code></td><td>색·깜빡임 패턴</td><td><code>led::pattern(...)</code></td></tr>
     <tr><td><code>sonar</code></td><td>초음파 거리 (추격차만 발사)</td><td><code>sonar::cm()</code></td></tr>
     <tr><td><code>hall</code></td><td>KY-024 기준값·변화량, 잡힘 감지 (도주차만)</td><td><code>hall::delta()</code>, <code>hall::triggered()</code></td></tr>
-    <tr><td><code>ble_control</code></td><td>Dabble 게임패드 → throttle/steer, START 버튼, 연결 끊김 감지</td><td><code>ble::read(...)</code></td></tr>
+    <tr><td><code>web</code></td><td>Wi-Fi 공유기 역할(AP) + 웹 화면 보내기 + 폰 입력 받기(조이스틱, 버튼, 이름), 연결 끊김 감지. 웹 일은 별도 태스크에서</td><td>입력 큐, 상태 JSON</td></tr>
     <tr><td><code>radio</code></td><td>ESP-NOW 보내기/받기, 팀 표시 확인</td><td><code>radio::send(msg)</code>, 받기 콜백 → 큐</td></tr>
     <tr><td><code>game</code></td><td>게임 단계 관리 (7장), 잡힘/받음 재전송</td><td><code>game::update()</code></td></tr>
     <tr><td><code>src/main.cpp</code></td><td>setup에서 초기화 + 재부팅 원인 출력, loop에서 위 update들을 차례로</td><td>—</td></tr>
@@ -136,9 +137,9 @@ pre{background:var(--part);border:1px solid var(--line);border-radius:8px;paddin
     <li>코어는 이 PC의 <b>Arduino-ESP32 2.0.17</b> (PlatformIO <code>espressif32@7.1.3</code>). PWM은 <code>ledcSetup / ledcAttachPin / ledcWrite</code>.</li>
     <li>ESP-NOW 받기 콜백은 무선 태스크(코어 0)에서 돌므로 <b>짧게 큐에 넣기만</b> 하고, 처리는 <code>loop()</code>(코어 1)에서.</li>
     <li>점검 프로그램 <code>src/tests/car1_test.cpp</code>는 L298N판으로 고쳐서(STBY 제거, 1kHz, 홀 센서 시험 추가) 계속 <code>[env:car1_test]</code>로 빌드.</li>
-    <li>Dabble은 <code>DabbleESP32</code> <b>1.5.1</b>을 씁니다. 최신 1.6.x는 코어 3.x 전용 함수(<code>ledcAttachChannel</code>)를 써서 이 코어(2.0.17)에서 컴파일되지 않습니다 (2026-10-17 확인).</li>
-    <li>순수 로직(주행 계산 · 배터리 · 홀 · 메시지 · 게임 · LED 색)은 <code>lib/rcar_logic</code>에 두고 <code>pio test -e logic_test</code>로 ESP32 위에서 시험합니다 (테스트 63개).</li>
-    <li>조종 끊김 정지: Dabble 1.5.1의 <code>isAppConnected()</code>는 한 번 true가 되면 내려가지 않아 쓰지 않습니다. 대신 라이브러리의 BLE 연결 플래그(<code>isDeviceConnected</code>)와 <b>0.5초 동안 받은 입력 없음</b>(<code>PAD_RX_TIMEOUT_MS</code>)으로 판단하고(<code>LinkWatch</code>), 끊기면 BLE 광고를 다시 시작해 폰이 다시 붙을 수 있게 합니다. Dabble 앱이 조이스틱을 가만히 둘 때 값을 보내지 않아 차가 끊기면 이 값을 0으로 바꿔 BLE 연결만 봅니다 — 실물 시험(11장 4번)에서 확인합니다.</li>
+    <li>조종 앱과 BLE는 쓰지 않습니다. 각 차가 자기 Wi-Fi(<code>RCAR-번호</code>)를 열고 폰 브라우저가 <code>http://192.168.4.1</code>로 접속합니다. 화면 파일과 글꼴은 펌웨어 안에 들어 있어 인터넷이 필요 없습니다.</li>
+    <li>순수 로직(주행 계산 · 배터리 · 홀 · 메시지 · 게임 · LED 색)은 <code>lib/rcar_logic</code>에 두고 <code>pio test -e logic_test</code>로 ESP32 위에서 시험합니다.</li>
+    <li>조종 끊김 정지: 폰 입력이 <b>0.5초</b> 동안 없으면(<code>PAD_RX_TIMEOUT_MS</code>) 그 차를 멈춥니다. 웹 일은 별도 태스크가 하고 메인 루프는 큐만 보므로, 아이폰이 게임 중 페이지를 다시 받느라 바빠도 차는 제때 섭니다. 실물 시험(11장 1번)에서 확인합니다.</li>
   </ul>
 </section>
 
@@ -174,7 +175,7 @@ pre{background:var(--part);border:1px solid var(--line);border-radius:8px;paddin
 정지          = 6.4 V 미만이 3초 계속 → 모터 정지 + 고정 (스위치를 껐다 켜야 풀림)
 재부팅 원인   = setup에서 esp_reset_reason() 출력. BROWNOUT이면 LED 보라 3회 깜빡임
                 → "출발할 때 꺼진다"를 바로 알 수 있음. 브라운아웃 검출 기능은 끄지 않음
-조종 끊김     = BLE 끊김 또는 0.5초 동안 새 명령 없음 → 그 차 정지 (게임은 계속)</pre>
+조종 끊김     = 폰 입력이 0.5초 동안 없음 → 그 차 정지 (잡힌 것은 아님, 게임은 계속)</pre>
 </section>
 
 <section id="d6">
@@ -195,8 +196,8 @@ pre{background:var(--part);border:1px solid var(--line);border-radius:8px;paddin
 
 <section id="d7">
   <h2>8. 게임 진행</h2>
-  <div class="sum"><b>요약</b> — 대기 → 카운트다운 3초 → 게임 중 → 게임 끝, START로 다시. 잡히면 도주차는 계속 정지, 추격차는 1초 정지.</div>
-<pre>[대기] ── 추격차 START ──▶ [카운트다운 3초] ──▶ [게임 중] ── 켜져 있는 도주차 모두 잡힘 ──▶ [게임 끝]
+  <div class="sum"><b>요약</b> — 추격차가 게임 시간과 참가 도주차를 고르고 START → 카운트다운 3초 → 게임 중 → 게임 끝(우승 표시), START로 다시. 잡히면 도주차는 계속 정지, 추격차는 1초 정지. 참가 도주차가 시간 안에 모두 잡히면 추격팀 우승, 시간이 끝나면 도주팀 우승.</div>
+<pre>[대기] ── 추격차 START ──▶ [카운트다운 3초] ──▶ [게임 중] ── 참가 도주차 모두 잡힘 / 시간 끝 ──▶ [게임 끝]
   ▲                                                                                      │
   └──────────────────────────────── 추격차 START ────────────────────────────────────────┘</pre>
   <div class="tw"><table>
@@ -209,10 +210,20 @@ pre{background:var(--part);border:1px solid var(--line);border-radius:8px;paddin
   </table></div>
   <ul>
     <li>역할 색: 추격차 흰색 · 도주차 1 초록 · 2 파랑 · 3 노랑.</li>
-    <li>"켜져 있는 도주차" = 최근 1초 안에 상태 알림을 보낸 도주차. 꺼진 차는 세지 않음.</li>
-    <li>START는 대기·게임 끝 단계에서만 받습니다 (게임 중 누름은 무시).</li>
+    <li>START는 대기·게임 끝 단계에서만 받습니다 (카운트다운·게임 중 누름은 무시).</li>
     <li>추격차가 2초 동안 보이지 않으면 도주차는 대기로 돌아가 자유 주행합니다.</li>
   </ul>
+  <h3>새 규칙 (웹 조종 화면과 함께)</h3>
+  <div class="tw"><table>
+    <tr><th>규칙</th><th>내용</th></tr>
+    <tr><td>게임 시간</td><td>추격차가 1:00~5:00 중에서 30초 단위로 고름. 처음은 3:00이고, 마지막에 고른 값을 기억함</td></tr>
+    <tr><td>참가 고르기</td><td>추격차가 어느 도주차가 참가할지 고른 뒤 START → 3초 카운트다운</td></tr>
+    <tr><td>우승</td><td>참가한 도주차가 시간 안에 <b>모두 잡히면 추격팀 우승</b>. 시간이 끝났는데 도주차가 한 대라도 살아 있으면 <b>도주팀 우승</b></td></tr>
+    <tr><td>관전</td><td>게임이 시작될 때 혼자 놀기 중이 아니면서 참가하지 않은 차는 그 판이 끝날 때까지 <b>관전</b> (조종 잠김, 버튼 비활성). 혼자 놀기 중인 차는 계속 혼자 운전</td></tr>
+    <tr><td>폰 연결 끊김</td><td>차는 약 0.5초 안에 멈추지만 <b>잡힌 것은 아님</b>. 멈춰 있는 동안 추격차가 다가오면 잡힘</td></tr>
+    <tr><td>꺼진 도주차</td><td>전원이 10초 안에 다시 켜지면 살아서 복귀. <b>10초를 넘기면 잡힌 것</b>으로 침</td></tr>
+    <tr><td>이름</td><td>최대 2글자(한글·영어·숫자). 이름 바꾸기 메뉴에서 바꾸고 모든 폰에 보임</td></tr>
+  </table></div>
 </section>
 
 <section id="d8">
@@ -234,7 +245,9 @@ Wi-Fi STA 모드 · 채널 1 고정 · 다른 팀 표시 또는 다른 판 번�
     <tr><th>이름</th><th>값</th><th>정하는 방법</th></tr>
     <tr><td>차 번호</td><td>1~4</td><td>차에 붙인 번호. 점검 프로그램 <code>r</code> (예: <code>r 2 runner</code>)</td></tr>
     <tr><td>역할</td><td>추격 / 도주</td><td>1번 = 추격 권장 (바꿀 수 있음). 위 <code>r</code>로 번호와 함께 저장</td></tr>
-    <tr><td>BLE 이름</td><td><code>RCAR-번호</code></td><td>차 번호로 자동</td></tr>
+    <tr><td>Wi-Fi 이름 · 비밀번호</td><td><code>RCAR-번호</code> · <code>rcartag번호</code></td><td>차 번호로 자동 (스티커 참고)</td></tr>
+    <tr><td>이름</td><td>0~2글자</td><td>폰 화면의 이름 바꾸기 메뉴. 한글·영어·숫자만. 비우면 <code>No.번호</code></td></tr>
+    <tr><td>게임 시간</td><td>1:00~5:00 (30초 단위)</td><td>추격차 폰에서 고름. 마지막 값을 기억</td></tr>
     <tr><td>방향 반전 L / R</td><td>예 / 아니오</td><td>점검 프로그램 <code>m</code> (모터 방향)</td></tr>
     <tr><td>최소 듀티</td><td>0~255</td><td>점검 프로그램 <code>n</code></td></tr>
     <tr><td>배터리 보정계수</td><td>약 0.9~1.1</td><td>점검 프로그램 <code>b</code>로 측정 → 멀티미터로 잰 전압을 <code>c</code>로 입력 (예: <code>c 7.52</code>)</td></tr>
@@ -250,7 +263,7 @@ Wi-Fi STA 모드 · 채널 1 고정 · 다른 팀 표시 또는 다른 판 번�
     <li><b>배선 + 점검 프로그램 (L298N판):</b> 배선 가이드 11단계 → p 배선 · m 방향 · n 최소 듀티 · d 데모 · s 전압 강하. <b>통과:</b> 바퀴를 띄운 상태에서 출발·급정지 20회 동안 재부팅 0회.</li>
     <li><b>PWM 비교:</b> 1kHz · 5kHz · 20kHz에서 최소 듀티와 L298N 온도(5분 주행)를 재서 하나로 정함.</li>
     <li><b>홀 센서:</b> h 메뉴로 자석 거리 1~8cm마다 변화량 기록 → 5cm 값을 기준으로. <b>통과:</b> 5cm 이내 10/10 감지, 6cm 이상 0/10 감지, 모터를 돌려도 오감지 없음.</li>
-    <li><b>Dabble 주행:</b> 폰 4대로 각자 차 연결, 0.5초 끊김 정지 확인.</li>
+    <li><b>웹 주행:</b> 아이폰·안드로이드로 각자 차에 접속(안드로이드는 연결 유지 선택, 안 열리면 모바일 데이터 끄기). 조이스틱 반응, 화면 끄기·앱 전환 때 0.5초 안 정지, 게임 중 새로 고침 뒤 같은 화면으로 복귀 확인.</li>
     <li><b>전진 제한:</b> 추격차를 벽으로 최고 속도로 보내 부딪치지 않고 멈춤 10/10.</li>
     <li><b>게임:</b> 4대로 START → 잡힘 3회 → 끝 → 재시작. 잡힘에서 두 차가 함께 멈추는지 영상으로 확인(0.1초 안).</li>
   </ol>
@@ -265,15 +278,37 @@ Wi-Fi STA 모드 · 채널 1 고정 · 다른 팀 표시 또는 다른 판 번�
     <li>PWM 주파수, L298N 전압 강하 V_강하, 최소 듀티</li>
     <li>잡힘 기준 mV (자석 20×10mm 도착 후), 센서·자석 높이</li>
     <li>전진 제한 거리 10cm / 3cm가 3~5cm 잡힘 거리와 맞는지 (초음파 위치와 자석 위치 차이 반영)</li>
-    <li>Dabble 앱이 팀원 폰(iOS/Android)에서 ESP32와 연결되는지</li>
+    <li>웹 조종 화면이 팀원 폰(iOS/Android)에서 잘 열리는지, Wi-Fi(AP)와 ESP-NOW를 같이 써도 잡힘 알림이 늦지 않은지</li>
   </ul>
   <h3>범위 밖 (이번에 하지 않음)</h3>
   <ul>
-    <li>점수판·시간 제한·여러 판 기록</li>
-    <li>자체 조종 앱 (Dabble 사용)</li>
+    <li>점수판·여러 판 기록</li>
+    <li>스마트폰 앱 (폰 브라우저 화면만 씀)</li>
     <li>도주차 초음파 사용 (부품은 달아 두되 발사하지 않음)</li>
     <li>무선 펌웨어 업데이트(OTA)</li>
   </ul>
+</section>
+
+<section id="d12">
+  <h2>13. 폰 웹 조종 화면 사용법</h2>
+  <div class="sum"><b>요약</b> — 앱 설치가 필요 없습니다. 차의 Wi-Fi(<code>RCAR-번호</code>)에 폰을 연결하고, 브라우저에서 <code>http://192.168.4.1</code>을 열면 게임기 모양의 조종 화면이 나옵니다. 차 1대에 폰 1대입니다.</div>
+  <h3>연결 방법</h3>
+  <ol>
+    <li>차 전원을 켭니다.</li>
+    <li>폰 Wi-Fi 목록에서 <b><code>RCAR-번호</code></b>를 고르고 비밀번호 <b><code>rcartag번호</code></b>를 넣습니다. (예: 2번 차 = <code>RCAR-2</code> / <code>rcartag2</code>) 차에 붙인 스티커(<code>rc-car-stickers.html</code>)에 적혀 있습니다.</li>
+    <li>브라우저(아이폰 Safari, 안드로이드 Chrome) 주소창에 <b><code>http://192.168.4.1</code></b>을 입력합니다.</li>
+  </ol>
+  <div class="box warn"><b>⚠ 안드로이드:</b> "인터넷 없음" 안내가 나오면 <b>"인터넷 없음 — 연결 유지"</b>를 고르세요. 그래도 페이지가 안 열리면 <b>모바일 데이터를 끄세요.</b> (폰이 인터넷이 되는 쪽으로 자꾸 돌아가려 해서 생기는 일입니다.)</div>
+  <h3>화면</h3>
+  <div class="tw"><table>
+    <tr><th>화면</th><th>하는 일</th></tr>
+    <tr><td>메뉴</td><td><b>게임</b> / <b>혼자 놀기</b> / <b>이름 바꾸기</b> 중 고르기</td></tr>
+    <tr><td>혼자 놀기</td><td>게임과 상관없이 혼자 운전</td></tr>
+    <tr><td>게임 (추격차)</td><td>게임 시간과 참가할 도주차를 고르고 START → 3초 카운트다운</td></tr>
+    <tr><td>게임 (도주차)</td><td>추격차의 START를 기다렸다가 카운트다운 후 운전</td></tr>
+    <tr><td>결과</td><td>추격팀 / 도주팀 우승 표시, 추격차가 START로 다시 시작</td></tr>
+  </table></div>
+  <p>화면은 옛날 게임기처럼 생겼습니다. 위쪽 작은 화면(LCD)에 <b>남은 시간 · 남은 차 · 내 차 상태</b>가 나오고, 아래에 조이스틱과 SELECT · START 버튼이 있으며, 맨 아랫줄에 <code>RC-CAR TAG · 이름 역할</code>이 보입니다.</p>
 </section>
 
 <p style="color:var(--muted);font-size:13px;text-align:center">RC카 L298N 설계서 · 2026-10-16 · 배선 단계는 rc-car-l298n-wiring.html · 이전 판(v2.1, TB6612)은 docs/old/</p>

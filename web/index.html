@@ -1,1 +1,420 @@
-<!doctype html><title>RC-CAR TAG</title>
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#2b2d29">
+<title>RC-CAR TAG</title>
+<!--
+  RC카 술래잡기 조종 화면 (차의 ESP32 가 보냄). 시안: docs/superpowers/specs/web-controller-mockups/
+  - 화면은 차가 보내는 상태 JSON(web_proto.cpp buildStateJson)을 그대로 그림. 화면의 주인은 차.
+  - 폰 → 차 명령(글자): "J x y" "S" "G" "M <모드>" "T +/-" "P <번호>" "N <이름>"
+  - 크기 단위 u = 시안(220x450 게임기)의 1px. 아래 CSS 의 "36u" 는 JS 가 calc(var(--u)*36) 로 바꿈.
+  - 시험: 주소 뒤 ?demo (3초마다 화면 차례로) 또는 ?demo=menu 등 (소켓 없이 가짜 상태).
+-->
+<style>
+@font-face{font-family:Galmuri11;src:url(/Galmuri11.woff2) format('woff2');font-display:swap}
+</style>
+<style id="css">
+:root{--vh:100vh}
+@supports (height:100svh){:root{--vh:100svh}}
+:root{--u:min(calc(100vw / 232),calc(var(--vh) / 470),3px)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:#2b2d29}
+body{display:flex;align-items:center;justify-content:center;font-family:Galmuri11,monospace;touch-action:none;
+  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+[hidden]{display:none!important}
+b{font-weight:normal;text-shadow:.08em 0 currentColor}  /* 굵게 = 글꼴 1픽셀 겹쳐 찍기 (Bold 글꼴 파일 없이) */
+.gb{width:min(calc(100vw - 12px),250u);height:min(calc(var(--vh) - 12px),540u);border-radius:16u 16u 52u 16u;background:#cfd3c5;
+  padding:12u;box-shadow:inset 0 -6u 0 #a5a998,0 5u 0 #7d8072;display:flex;flex-direction:column;gap:12u}
+.bezel{flex:2;min-height:0;background:#5a6156;border-radius:10u 10u 28u 10u;padding:9u 9u 14u;display:flex;flex-direction:column}
+.lcd{flex:1;min-height:0;background:#9bbc0f;border:3u solid #306230;display:flex;flex-direction:column;color:#0f380f;overflow:hidden}
+.tm{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.tm small{font-size:10u}.tm b{font-size:36u;letter-spacing:2u;line-height:1.1}
+.tm.solo b{font-size:24u;letter-spacing:0}
+.tm .logo{font-size:20u;letter-spacing:1u}
+.tm .sel{display:flex;align-items:center;gap:2u}
+.tm .sel em{font-style:normal;font-size:18u;padding:4u 8u}
+.cars{border-top:3u solid #306230;border-bottom:3u solid #306230;background:#8bac0f;padding:4u 6u;min-height:24u;
+  display:flex;align-items:center;justify-content:center;gap:7u;font-size:10u;white-space:nowrap}
+.cars svg{width:22u;height:14u;display:block}
+.cars .gone{opacity:.28}
+.cars span{margin-left:4u}
+.cars.pick{gap:8u;padding:5u 4u}
+.cars.pick .c{display:flex;flex-direction:column;align-items:center;gap:2u;font-size:10u;line-height:1;padding:4u 3u;min-width:32u}
+.cars.pick .c svg{width:24u;height:15u}
+.cars.pick .c.on{outline:2u solid #0f380f;outline-offset:-1u}
+.cars.pick .c.out svg{opacity:.28}.cars.pick .c.out em{text-decoration:line-through}
+.cars.pick .c.off{opacity:.25}.cars.pick .c em{font-style:normal}
+.cars.pick span{margin-left:2u}
+.st{flex:1;display:flex;align-items:center;justify-content:center;gap:8u;white-space:nowrap}
+.st b{font-size:22u}
+.st .ar{width:20u;height:20u;display:block;flex:none}
+.st.alert{background:#0f380f;color:#9bbc0f;flex-direction:column;gap:3u}
+.st.alert b{font-size:20u;animation:blink 1s steps(1) infinite}
+.st.alert small{font-size:10u}
+.st.big b{font-size:40u;line-height:1;animation:none}
+@keyframes blink{50%{opacity:.35}}
+.menu{flex:1;display:flex;flex-direction:column;justify-content:center;gap:6u;padding:8u 12u}
+.menu .logo{text-align:center;font-size:17u;letter-spacing:1u;margin-bottom:6u}
+.menu .logo small{display:block;font-size:9u;letter-spacing:0;margin-top:3u}
+.mi{font-size:13u;padding:6u 8u 6u 24u;border:2u solid transparent}
+.mi.cur{border-color:#0f380f;background:#8bac0f;padding-left:8u}
+.mi.cur::before{content:"▶ "}
+.name{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10u;font-size:10u}
+.boxes{display:flex;gap:8u}
+.boxes span{width:42u;height:46u;border:3u solid #0f380f;display:flex;align-items:center;justify-content:center;font-size:26u;background:#8bac0f}
+.boxes span.cursor{animation:blink 1s steps(1) infinite}
+.name small{font-size:9u}.name .err{background:#0f380f;color:#9bbc0f;padding:2u 5u}
+.ctl{flex:1.7;min-height:0;display:flex;align-items:center;justify-content:center;position:relative}
+.joy{width:128u;height:128u;border-radius:50%;background:#3a3d37;box-shadow:inset 0 5u 0 #222;position:relative;flex:none}
+.joy i{position:absolute;left:36u;top:36u;width:56u;height:56u;border-radius:50%;background:#8b1e4f;box-shadow:inset 0 -5u 0 #5c1234}
+.locked .joy{background:#8e9186;box-shadow:inset 0 5u 0 #74776c}
+.locked .joy i{background:#a6a99d;box-shadow:inset 0 -5u 0 #8e9186;transform:none!important}
+.lock{position:absolute;font-size:11u;color:#3a3d37;background:#cfd3c5;border:2u solid #3a3d37;padding:2u 6u;bottom:6u;display:none}
+.locked .lock{display:block}
+.nin{width:100%;display:flex;flex-direction:column;align-items:center;gap:6u;font-size:10u;color:#3a3d37}
+.nin input{width:150u;font:inherit;font-size:max(16px,16u);text-align:center;padding:8u;border:3u solid #3a3d37;border-radius:0;
+  background:#e4e7da;color:#0f380f;outline:none;-webkit-user-select:text;user-select:text;-webkit-appearance:none}
+.nin input:focus{border-color:#8b1e4f}
+.pills{display:flex;justify-content:center;gap:6u;margin-top:-4u}
+.pill{display:flex;flex-direction:column;align-items:center;gap:3u;font-size:9u;color:#3c3f8a;letter-spacing:1u;padding:6u 12u}
+.pill i{width:44u;height:12u;border-radius:8u;background:#6d7064;transform:rotate(-25deg);box-shadow:inset 0 -3u 0 #4f5248}
+.pill.hot i{background:#8b1e4f;box-shadow:inset 0 -3u 0 #5c1234,0 0 0 3u rgba(139,30,79,.25)}
+.pill.hot.press i{box-shadow:inset 0 3u 0 #5c1234,0 0 0 3u rgba(139,30,79,.25)}
+.pill.off{opacity:.35}
+.brand{display:flex;align-items:center;font-size:10u;color:#3c3f8a;letter-spacing:2u;padding:0 4u 4u 2u;white-space:nowrap;overflow:hidden}
+.brand .no{margin-left:6u}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <!-- 픽셀 자동차 (11 x 7) -->
+    <symbol id="car" viewBox="0 0 11 7" shape-rendering="crispEdges">
+      <rect x="3" y="0" width="5" height="1" fill="#0f380f"/><rect x="2" y="1" width="7" height="1" fill="#0f380f"/>
+      <rect x="3" y="1" width="2" height="1" fill="#9bbc0f"/><rect x="6" y="1" width="2" height="1" fill="#9bbc0f"/>
+      <rect x="0" y="2" width="11" height="3" fill="#0f380f"/>
+      <rect x="1" y="5" width="3" height="2" fill="#0f380f"/><rect x="7" y="5" width="3" height="2" fill="#0f380f"/>
+      <rect x="2" y="5" width="1" height="1" fill="#9bbc0f"/><rect x="8" y="5" width="1" height="1" fill="#9bbc0f"/>
+    </symbol>
+  </defs>
+</svg>
+<div class="gb" id="gb">
+  <div class="bezel"><div class="lcd" id="lcd">
+    <div class="tm" id="tm"></div>
+    <div class="cars" id="cars"></div>
+    <div class="st" id="st"></div>
+    <div class="menu" id="menu" hidden></div>
+    <div class="name" id="name" hidden>
+      <small>이름 (2글자)</small>
+      <div class="boxes"><span id="b0"></span><span id="b1"></span></div>
+      <small id="nh"></small>
+    </div>
+  </div></div>
+  <div class="ctl" id="ctl">
+    <div class="joy" id="joy"><i id="knob"></i></div><div class="lock">LOCK</div>
+    <label class="nin" id="nin" hidden>눌러서 이름 입력<input id="nm" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" placeholder="예: 민수"></label>
+  </div>
+  <div class="pills"><div class="pill off" id="sel"><i></i>SELECT</div><div class="pill off" id="sta"><i></i>START</div></div>
+  <div class="brand" id="brand"><span>RC-CAR TAG</span></div>
+</div>
+<script>
+'use strict';
+// "36u" → calc(var(--u)*36)
+(function(e){e.textContent=e.textContent.replace(/(-?\d+(\.\d+)?)u\b/g,'calc(var(--u)*$1)')})(document.getElementById('css'));
+
+const $=id=>document.getElementById(id), A=Math.abs;
+const Q=new URLSearchParams(location.search), DEMO=Q.has('demo');
+// file:// 로 열면 /Galmuri11.woff2 가 안 열리므로 시험 모드에서는 같은 폴더의 글꼴
+if(DEMO)document.head.insertAdjacentHTML('beforeend','<style>@font-face{font-family:Galmuri11;src:url(Galmuri11.woff2) format("woff2")}</style>');
+
+// ---------- 픽셀 그림 (화살표 등, 글꼴에 기대지 않음) ----------
+function pix(n,f){
+  let r='';
+  for(let y=0;y<n;y++)for(let x=0;x<n;){
+    if(!f(x,y)){x++;continue}
+    let w=0;while(x+w<n&&f(x+w,y))w++;
+    r+=`<rect x="${x}" y="${y}" width="${w}" height="1"/>`;x+=w;
+  }
+  return `<svg class="ar" viewBox="0 0 ${n} ${n}" shape-rendering="crispEdges" fill="currentColor">${r}</svg>`;
+}
+const up=(x,y)=>y<=3?A(x-4)<=y:A(x-4)<=1;         // ↑ (9x9)
+const diag=(x,y)=>x+y<=4||A(x-y)<=1;               // ↖ (9x9)
+const SPIN=['......#....','...#####...','..#######..','.##...##...','.##...#....','.##.....##.','.##.....##.','.###...###.','..#######..','...#####...','...........'];
+const spin=(x,y)=>SPIN[y][x]==='#';                // ↻ (11x11): 오른쪽 위가 빈 고리 + 위쪽 화살촉
+const IC={
+  stop:pix(9,(x,y)=>x>=2&&x<=6&&y>=2&&y<=6),
+  fwd:pix(9,up), back:pix(9,(x,y)=>up(x,8-y)),
+  left:pix(9,diag), right:pix(9,(x,y)=>diag(8-x,y)),
+  spinR:pix(11,spin), spinL:pix(11,(x,y)=>spin(10-x,y)),
+  blocked:pix(9,(x,y)=>y<=1||(y>=3&&(y<=5?A(x-4)<=y-3:A(x-4)<=1))),
+  bat:pix(11,(x,y)=>((y==3||y==8)&&x<=8)||((x==0||x==8)&&y>=3&&y<=8)||(x==9&&y>=5&&y<=6)||(x>=2&&x<=3&&y>=5&&y<=6))
+};
+const LB={stop:'멈춤',fwd:'직진',back:'후진',left:'좌회전',right:'우회전',spinL:'제자리 왼쪽',spinR:'제자리 오른쪽',blocked:'앞 막힘'};
+
+// ---------- 도움 함수 ----------
+const esc=s=>String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
+const bit=(m,i)=>((m|0)>>i)&1;
+const ids=m=>[1,2,3,4].filter(i=>bit(m,i));
+const fmt=s=>{s=Math.max(0,s|0);return (s/60|0)+':'+String(s%60).padStart(2,'0')};
+const roleK=s=>s.role==='chaser'?'추격':'도주';
+const myName=s=>s.name||('No.'+s.id);
+const carName=(s,i)=>i==s.id?myName(s):((s.names&&s.names[i])||String(i));
+// 글자 수에 맞춰 크기를 줄임 (u 단위, 한글 1칸·영문/숫자 0.6칸)
+function fit(t,max,room){let n=0;for(const c of t)n+=c.charCodeAt(0)<128?.6:1;return Math.min(max,Math.floor(room/Math.max(n,1)))}
+const B=(t,max,room)=>`<b style="font-size:calc(var(--u)*${fit(t,max,room)})">${esc(t)}</b>`;
+const icon=g=>`<svg${g?' class="gone"':''}><use href="#car"/></svg>`;
+const MENU=[['lobby','게임'],['solo','혼자 놀기'],['rename','이름 바꾸기']];
+
+// ---------- 상태 ----------
+let S=null;            // 차가 보낸 마지막 상태 (없으면 아직 못 받음)
+let online=false;      // 최근에 상태를 받고 있음
+let cur=0;             // 메뉴 커서
+let nameErr=false, composing=false, lastMode='';
+let jx=0,jy=0;         // 조이스틱 (−100~100)
+
+// 지금 조이스틱을 쓸 수 없는가 (LOCK 표시)
+function isLocked(s){
+  if(!s||s.mode==='menu'||s.mode==='rename')return false;
+  if(s.mode==='lobby'&&(s.spec||s.phase==='countdown'||s.phase==='over'||(s.phase==='playing'&&s.me)))return true;
+  return !!s.lock;
+}
+function canSelect(s){return online&&s&&!s.spec&&!(s.mode==='lobby'&&(s.phase==='countdown'||s.phase==='playing'))}
+function canStart(s){
+  if(!online||!s||s.spec)return false;
+  if(s.mode==='menu'||s.mode==='rename')return true;
+  if(s.mode!=='lobby'||s.role!=='chaser')return false;
+  if(s.phase==='idle')return ids(s.part).length>0;
+  if(s.phase==='over')return ids(s.elig).length>0;   // 다시 하기 = 그 순간 고를 수 있는 차 전부
+  return false;
+}
+
+// ---------- 그리기 ----------
+function setH(el,h){if(el._h!==h){el._h=h;el.innerHTML=h}}
+function setC(el,c){if(el.className!==c)el.className=c}
+function show(el,on){if(el.hidden===on)el.hidden=!on}
+
+function draw(){
+  const s=S;
+  const kind=!s?'boot':s.mode==='menu'?'menu':s.mode==='rename'?'name':'blocks';
+  show($('tm'),kind==='blocks'||kind==='boot');show($('cars'),kind==='blocks'||kind==='boot');show($('st'),kind==='blocks'||kind==='boot');
+  show($('menu'),kind==='menu');show($('name'),kind==='name');
+  if(s&&s.mode!==lastMode){if(s.mode==='rename'){$('nm').value=s.name||'';nameErr=false}else $('nm').blur();lastMode=s.mode}
+
+  if(kind==='boot'){
+    setC($('tm'),'tm');setH($('tm'),'<b class="logo">RC-CAR TAG</b>');
+    setC($('cars'),'cars');setH($('cars'),'<span>RCAR Wi-Fi 확인</span>');
+    setC($('st'),'st alert');setH($('st'),'<b>연결 중…</b>');
+  }else if(kind==='menu'){
+    setH($('menu'),`<div class="logo">RC-CAR TAG<small>${online?esc(myName(s)+' · '+roleK(s)+'차'):'연결 중…'}</small></div>`+
+      MENU.map((m,i)=>`<div class="mi${i===cur?' cur':''}" data-m="${m[0]}">${m[1]}</div>`).join(''));
+  }else if(kind==='name'){
+    const ch=Array.from($('nm').value);
+    const box=i=>{const e=$('b'+i);e.textContent=ch[i]||(i===ch.length?'_':'');e.className=(i===ch.length&&!ch[i])?'cursor':''};
+    box(0);box(1);
+    const nh=$('nh');
+    nh.className=nameErr?'err':'';
+    nh.textContent=!online?'연결 중…':nameErr?'2글자 · 한글/영문/숫자':'START 저장 · SELECT 취소';
+  }else drawBlocks(s);
+
+  // 조이스틱 칸 / 이름 입력 칸
+  show($('joy'),kind!=='name');show($('nin'),kind==='name');
+  const lk=isLocked(s);
+  $('ctl').classList.toggle('locked',lk);
+  if(lk||kind==='name')release();
+
+  setC($('sel'),'pill '+(canSelect(s)?'hot':'off'));
+  setC($('sta'),'pill '+(canStart(s)?'hot':'off'));
+  setH($('brand'),'<span>RC-CAR TAG</span>'+(s?`<span class="no">· ${esc(myName(s))} ${roleK(s)}</span>`:''));
+}
+
+function drawBlocks(s){
+  const tm=$('tm'),cars=$('cars'),st=$('st');
+  const ph=s.phase,lobby=s.mode==='lobby',ch=s.role==='chaser';
+  const inGame=lobby&&(ph==='playing'||ph==='over');
+  const caught=inGame?(s.cm|0):0;   // cm 은 대기 중에 지난 판 값이 남아 있을 수 있음 → 게임 중·끝에서만 씀
+  // ① 시간
+  let tc='tm',th;
+  if(s.mode==='solo'){tc='tm solo';th='<small>혼자 놀기</small><b>자유 운전</b>'}
+  else if(ph==='idle'&&ch&&!s.spec)th=`<small>게임 시간 고르기</small><div class="sel"><em data-t="-">◀</em><b>${fmt(s.sec)}</b><em data-t="+">▶</em></div>`;
+  else if(ph==='idle')th=`<small>게임 시간</small><b>${fmt(s.sec)}</b>`;
+  else th=`<small>남은 시간</small><b>${fmt(ph==='countdown'?s.sec:Math.ceil((s.ms|0)/1000))}</b>`;
+  setC(tm,tc);setH(tm,th);
+
+  // ② 띠
+  let cc='cars',chh;
+  if(s.mode==='solo'){
+    const v=s.bs==='none'?'--':((s.bat|0)/10).toFixed(1)+'V';
+    chh=`<span>배터리 ${v} · 앞 거리 ${(s.dist|0)<0?'--':(s.dist|0)+'cm'}</span>`;
+  }else if(ph==='idle'&&ch){
+    cc='cars pick';
+    chh=[1,2,3,4].filter(i=>i!=s.id).map(i=>{
+      const el=bit(s.elig,i),on=bit(s.part,i);
+      return `<div class="c ${!el?'off':on?'on':'out'}"${el&&!s.spec?` data-p="${i}"`:''}>${icon(0)}<em>${esc(carName(s,i))}${el?'':'?'}</em></div>`;
+    }).join('')+`<span>${ids(s.part).length}대 참가</span>`;
+  }else{
+    const p=ids(s.part),alive=p.filter(i=>!bit(caught,i)).length;
+    chh=p.map(i=>icon(bit(caught,i))).join('')+`<span>${ph==='idle'?p.length+'대 참가':alive+'/'+p.length}</span>`;
+  }
+  setC(cars,cc);setH(cars,chh);
+
+  // ③ 상태 (결과·알림이 동작 글자보다 먼저)
+  let sc='st',sh;
+  const alert=(b,sm)=>{sc='st alert';sh=`<b>${esc(b)}</b>`+(sm?`<small>${esc(sm)}</small>`:'')};
+  if(!online)alert('연결 중…','RCAR-'+(s.id|0)+' Wi-Fi 확인');
+  else if(lobby&&ph==='over'){
+    const p=ids(s.part).length,alive=ids(s.part).filter(i=>!bit(caught,i)).length;
+    if(s.win==1)alert('추격팀 우승!','모두 잡음');else if(s.win==2)alert('도주팀 우승!',alive+'대 생존');else alert('게임 끝','');
+  }
+  else if(lobby&&s.spec)alert('관전','이번 판은 빠짐');
+  else if(lobby&&ph==='countdown'){sc='st alert big';sh=`<b>${Math.max(1,Math.ceil((s.ms|0)/1000))}</b><small>준비!</small>`}
+  else if(lobby&&ph==='playing'&&s.me)alert('잡혔다!','끝날 때까지 대기');
+  else if(lobby&&ph==='idle'&&ch)sh=B(ids(s.part).length?'START 누르기':'도주차 기다리는 중',22,150);
+  else if(lobby&&ph==='idle')alert('대기 중','추격차가 START 하면 시작');
+  else{   // 혼자 놀기·게임 중: 차가 실제로 하는 동작
+    let ic=IC[s.label]||IC.stop,t=LB[s.label]||'멈춤';
+    if(s.bs==='cut'){ic=IC.bat;t='배터리 정지'}
+    else if(s.bs==='warn'&&(Date.now()/1000|0)%2){ic=IC.bat;t='배터리 부족'}
+    sh=ic+B(t,22,136);
+  }
+  setC(st,sc);setH(st,sh);
+}
+
+// ---------- 연결 ----------
+let ws=null,retryT=0,lastRx=0;
+function send(c){
+  if(S&&S.spec&&c[0]!=='J')return;            // 관전 중에는 연결 확인용 J 만
+  if(DEMO){if(c[0]!=='J')console.log('send',c);return}
+  if(ws&&ws.readyState===1)try{ws.send(c)}catch(e){}
+}
+function openWs(){
+  if(DEMO||ws||document.hidden)return;
+  let s;
+  try{s=new WebSocket('ws://'+location.hostname+':81/')}catch(e){retry();return}
+  ws=s;lastRx=Date.now();
+  s.onmessage=e=>{
+    if(ws!==s)return;
+    let j;try{j=JSON.parse(e.data)}catch(_){return}
+    lastRx=Date.now();S=j;
+    if(!online){online=true}
+    draw();
+  };
+  s.onclose=s.onerror=()=>{if(ws===s)drop(true)};
+}
+function drop(again){
+  if(ws){const s=ws;ws=null;s.onmessage=s.onclose=s.onerror=null;try{s.close()}catch(e){}}
+  if(online){online=false;draw()}
+  if(again)retry();
+}
+function retry(){clearTimeout(retryT);if(!document.hidden)retryT=setTimeout(openWs,1000)}
+function onVis(){
+  if(document.hidden){clearTimeout(retryT);release(true);drop(false)}  // 숨겨지면 소켓을 닫음 → 차가 0.5초 안에 섬
+  else openWs();
+}
+document.addEventListener('visibilitychange',onVis);
+addEventListener('pagehide',()=>{clearTimeout(retryT);drop(false)});
+addEventListener('pageshow',()=>openWs());
+
+// 50ms마다 조이스틱 (가운데·LOCK 이어도 J 0 0 — 연결 확인용)
+setInterval(()=>{
+  if(DEMO||document.hidden)return;
+  if(ws&&Date.now()-lastRx>3000){drop(true);return}   // 3초 동안 아무것도 못 받음 → 다시 연결
+  if(!ws||ws.readyState!==1||ws.bufferedAmount>256)return;   // 밀린 입력은 쌓지 않음
+  const drive=online&&S&&!isLocked(S)&&(S.mode==='solo'||S.mode==='lobby');
+  send(drive?`J ${jx} ${jy}`:'J 0 0');
+},50);
+setInterval(()=>{if(S&&S.bs==='warn')draw()},250);   // 배터리 부족 번갈아 보이기
+
+// ---------- 조이스틱 ----------
+const ctl=$('ctl'),joy=$('joy'),knob=$('knob');
+let jp=null,cx=0,cy=0,R=1,arm=true;
+ctl.addEventListener('pointerdown',e=>{
+  if(jp!==null||!S||isLocked(S)||S.mode==='rename')return;
+  e.preventDefault();
+  jp=e.pointerId;try{ctl.setPointerCapture(jp)}catch(_){}
+  const r=joy.getBoundingClientRect();
+  cx=r.left+r.width/2;cy=r.top+r.height/2;R=r.width*36/128;
+  move(e);
+});
+ctl.addEventListener('pointermove',e=>{if(e.pointerId===jp)move(e)});
+for(const t of['pointerup','pointercancel','lostpointercapture'])ctl.addEventListener(t,e=>{if(e.pointerId===jp)release()});
+function move(e){
+  let dx=e.clientX-cx,dy=e.clientY-cy;const d=Math.hypot(dx,dy);
+  if(d>R){dx*=R/d;dy*=R/d}
+  knob.style.transform=`translate(${dx}px,${dy}px)`;
+  let x=Math.round(dx/R*100),y=Math.round(-dy/R*100);
+  if(Math.hypot(x,y)<8)x=y=0;
+  jx=x;jy=y;
+  if(S&&S.mode==='menu'){   // 메뉴: 위·아래로 커서만 (차는 안 움직임)
+    if(arm&&y>55&&cur>0){cur--;arm=false;draw()}
+    else if(arm&&y<-55&&cur<MENU.length-1){cur++;arm=false;draw()}
+    else if(A(y)<25)arm=true;
+  }
+}
+function release(quiet){
+  if(jp===null)return;
+  jp=null;jx=jy=0;arm=true;knob.style.transform='';
+  if(!quiet)send('J 0 0');   // 손을 떼면 바로 정지
+}
+
+// ---------- 버튼 ----------
+function press(el){el.classList.add('press');setTimeout(()=>el.classList.remove('press'),120)}
+function doStart(){
+  const s=S;if(!canStart(s))return;
+  if(s.mode==='menu')return send('M '+MENU[cur][0]);
+  if(s.mode==='rename'){
+    const v=$('nm').value.trim();
+    if(!/^[A-Za-z0-9가-힣]{0,2}$/.test(v)){nameErr=true;draw();return}
+    $('nm').blur();
+    return send(v?'N '+v:'N');
+  }
+  send('G');
+}
+$('sta').addEventListener('pointerdown',e=>{e.preventDefault();if(canStart(S)){press($('sta'));doStart()}});
+$('sel').addEventListener('pointerdown',e=>{e.preventDefault();if(canSelect(S)){press($('sel'));$('nm').blur();send('S')}});
+$('lcd').addEventListener('pointerdown',e=>{
+  const t=e.target.closest('[data-m],[data-t],[data-p]');
+  if(!t||!S||!online||S.spec)return;
+  e.preventDefault();
+  if(t.dataset.m&&S.mode==='menu'){cur=MENU.findIndex(m=>m[0]===t.dataset.m);draw();send('M '+t.dataset.m)}
+  else if(t.dataset.t&&S.role==='chaser'&&S.mode==='lobby'&&S.phase==='idle')send('T '+t.dataset.t);
+  else if(t.dataset.p&&S.role==='chaser'&&S.mode==='lobby'&&S.phase==='idle')send('P '+t.dataset.p);
+});
+const nm=$('nm');
+nm.addEventListener('compositionstart',()=>composing=true);
+nm.addEventListener('compositionend',()=>{composing=false;check()});
+nm.addEventListener('input',check);
+function check(){nameErr=!composing&&!/^[A-Za-z0-9가-힣]{0,2}$/.test(nm.value.trim());draw()}
+nm.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();doStart()}});
+nm.addEventListener('blur',()=>scrollTo(0,0));
+document.addEventListener('touchmove',e=>{if(e.target!==nm)e.preventDefault()},{passive:false});
+document.addEventListener('gesturestart',e=>e.preventDefault());
+document.addEventListener('contextmenu',e=>e.preventDefault());
+
+// ---------- 시험 모드 (?demo) ----------
+if(DEMO){
+  const N=['','','민수','','지우'];
+  const base={id:2,role:'runner',name:'민수',mode:'lobby',phase:'idle',spec:0,me:0,lock:0,part:0,cm:0,elig:0,ms:0,sec:180,win:0,label:'stop',bat:76,bs:'ok',dist:32,names:N};
+  const D={
+    menu:{mode:'menu',lock:1},
+    rename:{mode:'rename',lock:1},
+    solo:{mode:'solo',label:'fwd'},
+    lobbyC:{id:1,role:'chaser',name:'',elig:12,part:4,label:'stop'},
+    lobbyR:{part:28,cm:8},
+    countdown:{id:1,role:'chaser',name:'',phase:'countdown',ms:1800,part:28,lock:1},
+    playing:{phase:'playing',ms:157000,part:28,cm:16,label:'left'},
+    caught:{id:3,name:'',phase:'playing',me:1,lock:1,ms:72000,part:28,cm:24},
+    spec:{id:4,name:'지우',phase:'playing',spec:1,lock:1,ms:95000,part:12},
+    overC:{id:1,role:'chaser',name:'',phase:'over',win:1,ms:41000,part:28,cm:28,elig:28,lock:1},
+    overR:{phase:'over',win:2,ms:0,part:28,cm:16,lock:1}
+  };
+  const keys=Object.keys(D),want=Q.get('demo');
+  let k=keys.indexOf(want);
+  const put=()=>{S=Object.assign({},base,D[keys[k]]);online=true;draw()};
+  if(k>=0)put();else{k=0;put();setInterval(()=>{k=(k+1)%keys.length;put()},3000)}
+}else openWs();
+draw();
+</script>
+</body>
+</html>

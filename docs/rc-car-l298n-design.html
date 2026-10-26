@@ -130,7 +130,7 @@ pre{background:var(--part);border:1px solid var(--line);border-radius:8px;paddin
     <tr><td><code>hall</code></td><td>KY-024 기준값·변화량, 잡힘 감지 (도주차만)</td><td><code>hall::delta()</code>, <code>hall::triggered()</code></td></tr>
     <tr><td><code>web</code></td><td>Wi-Fi 공유기 역할(AP) + 웹 화면 보내기 + 폰 입력 받기(조이스틱, 버튼, 이름), 연결 끊김 감지. 웹 일은 별도 태스크에서</td><td>입력 큐, 상태 JSON</td></tr>
     <tr><td><code>radio</code></td><td>ESP-NOW 보내기/받기, 팀 표시 확인</td><td><code>radio::send(msg)</code>, 받기 콜백 → 큐</td></tr>
-    <tr><td><code>game</code></td><td>게임 단계 관리 (8장), 잡힘/받음 재전송</td><td><code>game::update()</code></td></tr>
+    <tr><td><code>game</code></td><td>게임 단계 관리 (8장), 잡힘/받음 재전송</td><td><code>Game::tick()</code></td></tr>
     <tr><td><code>src/main.cpp</code></td><td>setup에서 초기화 + 재부팅 원인 출력, loop에서 위 update들을 차례로</td><td>—</td></tr>
   </table></div>
   <ul>

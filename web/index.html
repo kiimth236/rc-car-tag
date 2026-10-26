@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#2b2d29">
 <title>RC-CAR TAG</title>
 <!--
-  RC카 술래잡기 조종 화면 (차의 ESP32 가 보냄). 시안: docs/superpowers/specs/web-controller-mockups/
+  RC카 술래잡기 조종 화면 (차의 ESP32 가 보냄). 모양은 승인된 시안(220x450 픽셀 게임기)을 따름.
   - 화면은 차가 보내는 상태 JSON(web_proto.cpp buildStateJson)을 그대로 그림. 화면의 주인은 차.
   - 폰 → 차 명령(글자): "J x y" "S" "G" "M <모드>" "T +/-" "P <번호>" "N <이름>"
   - 크기 단위 u = 시안(220x450 게임기)의 1px. 아래 CSS 의 "36u" 는 JS 가 calc(var(--u)*36) 로 바꿈.
@@ -174,12 +174,15 @@ let cur=0;             // 메뉴 커서
 let nameErr=false, composing=false, lastMode='';
 let jx=0,jy=0;         // 조이스틱 (−100~100)
 
-// 지금 조이스틱을 쓸 수 없는가 (LOCK 표시)
+// 지금 조이스틱을 쓸 수 없는가 (LOCK 표시). 잠겨 있는 동안 50ms 신호는 J 0 0, 새로 누르기는 안 받음
 function isLocked(s){
   if(!s||s.mode==='menu'||s.mode==='rename')return false;
+  if(!online)return true;   // 연결이 끊기면 회색 LOCK
   if(s.mode==='lobby'&&(s.spec||s.phase==='countdown'||s.phase==='over'||(s.phase==='playing'&&s.me)))return true;
-  return !!s.lock;
+  return !!s.lock;           // 추격차가 잡은 뒤 1초 정지 등 잠깐 잠금
 }
+// 오래 가는 잠금 (관전·잡힘·결과): 끝나는 때를 내가 못 고르니 누르고 있던 손가락을 놓은 것으로 침
+function longLock(s){return !!s&&s.mode==='lobby'&&(s.spec||s.phase==='over'||(s.phase==='playing'&&s.me))}
 function canSelect(s){return online&&s&&!s.spec&&!(s.mode==='lobby'&&(s.phase==='countdown'||s.phase==='playing'))}
 function canStart(s){
   if(!online||!s||s.spec)return false;
@@ -200,7 +203,7 @@ function draw(){
   const kind=!s?'boot':s.mode==='menu'?'menu':s.mode==='rename'?'name':'blocks';
   show($('tm'),kind==='blocks'||kind==='boot');show($('cars'),kind==='blocks'||kind==='boot');show($('st'),kind==='blocks'||kind==='boot');
   show($('menu'),kind==='menu');show($('name'),kind==='name');
-  if(s&&s.mode!==lastMode){if(s.mode==='rename'){$('nm').value=s.name||'';nameErr=false}else $('nm').blur();lastMode=s.mode}
+  if(s&&s.mode!==lastMode){release();if(s.mode==='rename'){$('nm').value=s.name||'';nameErr=false}else $('nm').blur();lastMode=s.mode}  // 화면이 바뀌면 손가락을 놓은 것으로
 
   if(kind==='boot'){
     setC($('tm'),'tm');setH($('tm'),'<b class="logo">RC-CAR TAG</b>');
@@ -222,7 +225,8 @@ function draw(){
   show($('joy'),kind!=='name');show($('nin'),kind==='name');
   const lk=isLocked(s);
   $('ctl').classList.toggle('locked',lk);
-  if(lk||kind==='name')release();
+  // 잠깐 잠금(잡은 뒤 1초·카운트다운·연결 끊김)은 손가락을 그대로 둠: 잠긴 동안 J 0 0 만 가고, 풀리면 그 손가락으로 바로 운전
+  if(kind==='name'||longLock(s))release();
 
   setC($('sel'),'pill '+(canSelect(s)?'hot':'off'));
   setC($('sta'),'pill '+(canStart(s)?'hot':'off'));

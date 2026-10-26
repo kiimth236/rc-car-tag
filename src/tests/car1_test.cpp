@@ -206,11 +206,11 @@ float readVpin() { return batteryPinVolts(); }
 float readVbat() { return readVpin() * S.vbatK; }
 
 const char* batteryStatus(float v) {
-  if (v < 3.0f)         return "배터리 꺼짐 또는 연결 안 됨 (USB 만 연결?)";
+  if (v < 3.0f)         return "배터리 측정 안 함 (34번 핀이 GND 에 연결된 최소 구성이면 정상) 또는 배터리 꺼짐";
   if (v < V_STOP)       return "사용 중지 수준 (6.4V 미만) — 충전하세요";
   if (v < V_WARN)       return "경고 (6.8V 미만) — 곧 충전";
   if (v <= V_FULL+0.2f) return "정상";
-  return "너무 높게 읽힘 — 보정(c)이나 분압 저항 확인";
+  return "너무 높게 읽힘 — 보정(c)이나 분압 회로 확인";
 }
 
 // 모터 시험을 해도 되는 상태인지 확인
@@ -231,7 +231,7 @@ bool batteryOkForMotors() {
     return false;
   }
   if (v > V_FULL + 0.3f) {
-    Serial.printf("[경고] 배터리 %.2f V 는 만충(8.4V)보다 높게 읽힙니다. 보정(c)이나 분압 저항(33kΩ)을 확인하세요.\n", v);
+    Serial.printf("[경고] 배터리 %.2f V 는 만충(8.4V)보다 높게 읽힙니다. 측정 회로(100kΩ/33kΩ 분압)를 만든 경우 보정(c)과 분압 저항을 확인하세요.\n", v);
     return askYesNo("그래도 진행할까요?");
   }
   return true;
@@ -313,12 +313,12 @@ void cmdCalibrate(const String& arg) {
   }
   float vp = readVpin();
   if (vp < 0.2f) {
-    Serial.println("34번 핀 전압이 너무 낮아요 (배터리 꺼짐 / 분압 선 확인). 보정하지 않았습니다.");
+    Serial.println("34번 핀 전압이 너무 낮아요 (배터리 측정 회로가 없는 최소 구성이면 보정은 필요 없습니다 / 측정 회로가 있다면 분압 선 확인). 보정하지 않았습니다.");
     return;
   }
   float k = measured / vp;
   if (k < 3.3f || k > 4.8f) {
-    Serial.printf("계산된 보정계수 %.3f 가 기본값(%.3f)과 너무 달라요. 100kΩ/33kΩ 저항 값과 배선을 먼저 확인하세요.\n", k, cfg::VBAT_K_DEFAULT);
+    Serial.printf("계산된 보정계수 %.3f 가 기본값(%.3f)과 너무 달라요. (측정 회로를 만든 경우) 100kΩ/33kΩ 저항 값과 배선을 먼저 확인하세요.\n", k, cfg::VBAT_K_DEFAULT);
     return;
   }
   S.vbatK = k;
@@ -348,7 +348,7 @@ void cmdUltra() {
   if (valid > 0) Serial.printf(", 최소 %.1f ~ 최대 %.1f cm", dmin, dmax);
   Serial.println();
   if (total >= 5 && valid == 0) {
-    Serial.println("  → 계속 미검출이면: Trig=GPIO18 / Echo(분압 뒤)=GPIO19, 센서 VCC 5V · GND, 1kΩ/2kΩ 분압을 확인하세요.");
+    Serial.println("  → 현재 구성에는 초음파 센서를 달지 않았으므로 \"미검출\"이 정상입니다. 나중에 센서를 달면 Trig=GPIO18 / Echo=GPIO19 (Echo 에 1kΩ/2kΩ 분압 필수), VCC 5V · GND 를 확인하세요.");
   }
 }
 
@@ -356,7 +356,7 @@ void cmdDirection() {
   Serial.println("\n[모터 방향 시험]  ※ 바퀴를 바닥에서 띄우세요 (차를 들거나 받침 위에)");
   Serial.println("  (왼쪽 · 오른쪽 = 차를 뒤에서 앞쪽으로 바라봤을 때의 왼쪽 · 오른쪽)");
   if (!batteryOkForMotors()) return;
-  if (!askYesNo("바퀴가 떠 있고 배터리 스위치가 켜져 있나요?")) return;
+  if (!askYesNo("바퀴가 떠 있고 배터리 2개가 들어 있나요?")) return;
   bool changed = false;
   MotorRef* motors[] = {&refL, &refR};
   for (MotorRef* m : motors) {
@@ -397,7 +397,7 @@ void cmdMinDuty() {
   Serial.println("\n[최소 듀티 찾기]  ※ 바퀴를 띄우세요.");
   Serial.println("  듀티를 30부터 5씩 올립니다. 바퀴가 '돌기 시작하는 순간' Enter 를 치세요. (왼쪽 → 오른쪽 순서)");
   if (!batteryOkForMotors()) return;
-  if (!askYesNo("바퀴가 떠 있고 배터리 스위치가 켜져 있나요?")) return;
+  if (!askYesNo("바퀴가 떠 있고 배터리 2개가 들어 있나요?")) return;
   MotorRef* motors[] = {&refL, &refR};
   for (MotorRef* m : motors) {
     bool isLeft = m->left;
@@ -424,7 +424,7 @@ void cmdMinDuty() {
 void cmdDrive() {
   Serial.println("\n[주행 동작 데모]  ※ 바퀴를 띄우세요. 각 동작 후 정지합니다. (아무 글자 + Enter = 중단)");
   if (!batteryOkForMotors()) return;
-  if (!askYesNo("바퀴가 떠 있고 배터리 스위치가 켜져 있나요?")) return;
+  if (!askYesNo("바퀴가 떠 있고 배터리 2개가 들어 있나요?")) return;
   struct Move { const char* name; int l, r; uint32_t ms; const char* expect; };
   const int T = DUTY_TEST;
   const int top = dutyMax();
@@ -477,8 +477,8 @@ void cmdStall() {
   Serial.println("  <<< 정지");
   Serial.printf("배터리(34번 핀 기준): 시험 전 %.2f V → 구동 중 최저 %.2f V (처짐 %.2f V) → 정지 후 %.2f V\n", before, vmin, before - vmin, after);
   Serial.println("  ※ 이 값은 측정선에서 잰 배터리 쪽 처짐입니다. 합격 판정은 멀티미터로 본 '배터리 + ↔ L298N +12V' 값(1.0V 이하)으로 하세요.");
-  Serial.println("  → 1.0V 를 넘으면: 납땜 불량 · 접촉 불량 · 가는 전선 · 스위치(AC 정격만 있는 KCD1 등)를 의심하세요.");
-  Serial.println("  → 시험 직후 L298N 방열판 · 스위치 · 퓨즈 홀더가 뜨겁지 않은지 손으로 확인하세요.");
+  Serial.println("  → 1.0V 를 넘으면: 납땜 불량 · 접촉 불량 · 가는 전선 · 배터리 홀더 선을 의심하세요.");
+  Serial.println("  → 시험 직후 L298N 방열판 · 배터리 홀더 선이 뜨겁지 않은지 손으로 확인하세요.");
 }
 
 // 배선 확인 — 핀을 하나씩 HIGH 로 만들고 멀티미터로 해당 핀이 3.3V 인지 확인
@@ -507,7 +507,7 @@ void cmdPins() {
   }
   allStop();
   Serial.println("\n끝. 이 프로그램이 못 보는 전원은 멀티미터로 직접 확인하세요:");
-  Serial.println("  · L298N +12V = 배터리 전압(스위치 ON)   · L298N +5V · 브레드보드 5V 레일 = 4.8~5.2V   · (도주차) KY-024 + = 3.3V");
+  Serial.println("  · L298N +12V = 배터리 전압(배터리 넣은 상태)   · L298N +5V · 브레드보드 5V 레일 = 4.8~5.2V   · (도주차) KY-024 + = 3.3V");
 }
 
 // ============================ 홀 센서 · 역할 · PWM ============================

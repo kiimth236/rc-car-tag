@@ -43,7 +43,8 @@ static void pushLatest() {
   n = s_jsonLen;
   memcpy(buf, s_json, n);
   xSemaphoreGive(s_jsonMutex);
-  if (n > 0) s_ws->sendTXT((uint8_t)s_client, buf, n);
+  // 못 보냈으면(앱 전환으로 멈춘 아이폰 탭 등) 끊음 → 다음 보낼 때마다 몇 초씩 막히지 않게. 폰은 다시 붙으면 됨
+  if (n > 0 && !s_ws->sendTXT((uint8_t)s_client, buf, n)) s_ws->disconnect((uint8_t)s_client);
 }
 
 static void onWsEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length) {
@@ -104,11 +105,28 @@ static void webTask(void*) {
   }
 }
 
+// 실패하면 아무것도 안 함 (폰 없음 → 차는 서 있음). 멈추거나 재부팅하지 않음
 void webBegin() {
   if (s_cmdQueue) return;
-  s_cmdQueue = xQueueCreate(16, sizeof(rcar::WebCmd));
-  s_jsonMutex = xSemaphoreCreateMutex();
-  xTaskCreatePinnedToCore(webTask, "web", 8192, nullptr, 1, nullptr, 0);
+  QueueHandle_t q = xQueueCreate(16, sizeof(rcar::WebCmd));
+  SemaphoreHandle_t mx = xSemaphoreCreateMutex();
+  if (!q || !mx) {
+    // "[웹] 큐·뮤텍스를 못 만듦 - 폰 조종 없음"
+    Serial.println("[\xEC\x9B\xB9] \xED\x81\x90\xC2\xB7\xEB\xAE\xA4\xED\x85\x8D\xEC\x8A\xA4\xEB\xA5\xBC \xEB\xAA\xBB \xEB\xA7\x8C\xEB\x93\xA6 - \xED\x8F\xB0 \xEC\xA1\xB0\xEC\xA2\x85 \xEC\x97\x86\xEC\x9D\x8C");
+    if (q) vQueueDelete(q);
+    if (mx) vSemaphoreDelete(mx);
+    return;
+  }
+  s_cmdQueue = q;
+  s_jsonMutex = mx;
+  if (xTaskCreatePinnedToCore(webTask, "web", 8192, nullptr, 1, nullptr, 0) != pdPASS) {
+    // "[웹] 태스크를 못 만듦 - 폰 조종 없음"
+    Serial.println("[\xEC\x9B\xB9] \xED\x83\x9C\xEC\x8A\xA4\xED\x81\xAC\xEB\xA5\xBC \xEB\xAA\xBB \xEB\xA7\x8C\xEB\x93\xA6 - \xED\x8F\xB0 \xEC\xA1\xB0\xEC\xA2\x85 \xEC\x97\x86\xEC\x9D\x8C");
+    s_cmdQueue = nullptr;
+    s_jsonMutex = nullptr;
+    vQueueDelete(q);
+    vSemaphoreDelete(mx);
+  }
 }
 
 bool webPollCmd(rcar::WebCmd& out) {

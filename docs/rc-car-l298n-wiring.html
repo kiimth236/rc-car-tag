@@ -172,16 +172,18 @@ svg .dot{stroke:var(--card);stroke-width:1.5}
 
 <section id="s3">
   <h2><span class="no">3</span>모터선 (M1 · M2)</h2>
-  <div class="sum"><b>요약</b> — TT 모터에 달려 나온 선 2가닥을 <b>왼쪽 모터 → OUT1·OUT2</b>, <b>오른쪽 모터 → OUT3·OUT4</b> 나사 단자에 물립니다. 도는 방향이 반대여도 나중에 펌웨어에서 고칠 수 있으니 극성은 신경 쓰지 않아도 됩니다.</div>
+  <div class="sum"><b>요약</b> — TT 모터에 달려 나온 선 2가닥을 <b>왼쪽 모터 → OUT3·OUT4</b>, <b>오른쪽 모터 → OUT1·OUT2</b> 나사 단자에 물립니다 (4대 공통 — 펌웨어가 이렇게 맞춰져 있음). 도는 방향이 반대여도 나중에 펌웨어에서 고칠 수 있으니 극성은 신경 쓰지 않아도 됩니다.</div>
   <div class="chips"><span class="chip">TT모터 ×2 (선 달린 것)</span><span class="chip">작은 일자 드라이버</span></div>
-  <figure class="fig"><svg id="fig2" viewBox="0 0 1000 340" role="img" aria-label="모터 배선"></svg>
-    <figcaption>그림 2. 위에서 내려다본 모습 (차 앞쪽이 위). 모터마다 선 2가닥 → L298N 나사 단자</figcaption></figure>
+  <figure class="fig"><svg id="fig2" viewBox="0 0 1000 420" role="img" aria-label="모터 배선: 왼쪽 모터는 OUT3·OUT4, 오른쪽 모터는 OUT1·OUT2"></svg>
+    <figcaption>그림 2. 위에서 내려다본 모습 (차 앞쪽이 위). 왼쪽 모터(M1) → OUT3·OUT4, 오른쪽 모터(M2) → OUT1·OUT2. L298N을 어느 방향으로 놓든 단자 옆에 인쇄된 글자(OUT1~OUT4)를 보고 물립니다.</figcaption></figure>
   <ol class="steps">
     <li>모터마다 <b>선 2가닥</b>이 단자에 붙어 있는지 봅니다. 선이 없으면 수-수 점퍼선을 반으로 잘라(또는 남는 굵은 선) 모터 단자에 납땜합니다.</li>
     <li>선 끝 피복을 5~7mm 벗기고, 구리 가닥을 손가락으로 꼬아 한 가닥으로 만듭니다.</li>
-    <li>왼쪽 모터 선을 L298N <b>OUT1·OUT2</b>에, 오른쪽 모터 선을 <b>OUT3·OUT4</b>에 넣고 나사를 조입니다.</li>
+    <li><b>M1:</b> 왼쪽 모터 선을 L298N <b>OUT3·OUT4</b>에, <b>M2:</b> 오른쪽 모터 선을 <b>OUT1·OUT2</b>에 넣고 나사를 조입니다. 단자 옆에 인쇄된 글자를 보고 꽂으세요.</li>
   </ol>
+  <div class="box warn"><b>⚠ 왼쪽·오른쪽을 바꿔 꽂으면</b> 조이스틱을 왼쪽으로 밀었을 때 차가 오른쪽으로 돕니다. 왼쪽 = 차를 뒤에서 앞쪽으로 바라봤을 때의 왼쪽입니다.</div>
   <label class="chk"><input type="checkbox" data-k="s3a2"><span>모터 2개 모두 선 2가닥이 달려 있다 (모터 쪽 납땜이 흔들리지 않음)</span></label>
+  <label class="chk"><input type="checkbox" data-k="s3d"><span>왼쪽 모터 = OUT3·OUT4, 오른쪽 모터 = OUT1·OUT2 (단자 옆 글자로 확인)</span></label>
   <label class="chk"><input type="checkbox" data-k="s3b"><span>선을 살짝 당겨도 나사 단자에서 빠지지 않는다</span></label>
   <label class="chk"><input type="checkbox" data-k="s3c"><span>멀티미터 통전 모드: 모터 단자1 ↔ 단자2가 수 Ω(완전 단락 0Ω 아님)</span></label>
 </section>
@@ -257,18 +259,18 @@ svg .dot{stroke:var(--card);stroke-width:1.5}
 
 <section id="s8">
   <h2><span class="no">8</span>모터 신호선 6개 (S1~S6)</h2>
-  <div class="sum"><b>요약</b> — 암-암 점퍼선 6개: <b>ENA←25 · IN1←26 · IN2←27 · IN3←32 · IN4←33 · ENB←13</b>. 전부 ESP32 왼쪽 줄입니다. 레벨 변환기는 필요 없습니다.</div>
+  <div class="sum"><b>요약</b> — 암-암 점퍼선 6개: <b>ENA←25 · IN1←26 · IN2←27 · IN3←32 · IN4←33 · ENB←13</b>. 전부 ESP32 왼쪽 줄입니다. 레벨 변환기는 필요 없습니다. <b>ENA·IN1·IN2는 오른쪽 모터</b>(OUT1·OUT2), <b>IN3·IN4·ENB는 왼쪽 모터</b>(OUT3·OUT4)를 움직입니다.</div>
   <div class="chips"><span class="chip">암-암 점퍼선 ×6 (색 다르게)</span></div>
   <figure class="fig"><svg id="fig3" viewBox="0 0 900 500" role="img" aria-label="신호선 배선"></svg>
     <figcaption>그림 3. 신호선 — 그림의 선 색은 구분용입니다. 실제 점퍼선 색은 아무거나 써도 되지만, 4대 모두 같은 색으로 맞추면 점검이 쉽습니다.</figcaption></figure>
   <div class="tw"><table>
     <tr><th>번호</th><th>ESP32</th><th>L298N</th><th>하는 일</th></tr>
-    <tr><td><span class="sw" style="background:#db2777"></span>S1</td><td>GPIO25</td><td>ENA</td><td>왼쪽 모터 속도 (PWM)</td></tr>
-    <tr><td><span class="sw" style="background:#ca8a04"></span>S2</td><td>GPIO26</td><td>IN1</td><td>왼쪽 방향</td></tr>
-    <tr><td><span class="sw" style="background:#16a34a"></span>S3</td><td>GPIO27</td><td>IN2</td><td>왼쪽 방향</td></tr>
-    <tr><td><span class="sw" style="background:#7c3aed"></span>S4</td><td>GPIO13</td><td>ENB</td><td>오른쪽 모터 속도 (PWM)</td></tr>
-    <tr><td><span class="sw" style="background:#2563eb"></span>S5</td><td>GPIO32</td><td>IN3</td><td>오른쪽 방향</td></tr>
-    <tr><td><span class="sw" style="background:#0891b2"></span>S6</td><td>GPIO33</td><td>IN4</td><td>오른쪽 방향</td></tr>
+    <tr><td><span class="sw" style="background:#db2777"></span>S1</td><td>GPIO25</td><td>ENA</td><td>오른쪽 모터 속도 (PWM)</td></tr>
+    <tr><td><span class="sw" style="background:#ca8a04"></span>S2</td><td>GPIO26</td><td>IN1</td><td>오른쪽 모터 방향</td></tr>
+    <tr><td><span class="sw" style="background:#16a34a"></span>S3</td><td>GPIO27</td><td>IN2</td><td>오른쪽 모터 방향</td></tr>
+    <tr><td><span class="sw" style="background:#7c3aed"></span>S4</td><td>GPIO13</td><td>ENB</td><td>왼쪽 모터 속도 (PWM)</td></tr>
+    <tr><td><span class="sw" style="background:#2563eb"></span>S5</td><td>GPIO32</td><td>IN3</td><td>왼쪽 모터 방향</td></tr>
+    <tr><td><span class="sw" style="background:#0891b2"></span>S6</td><td>GPIO33</td><td>IN4</td><td>왼쪽 모터 방향</td></tr>
   </table></div>
   <div class="box warn"><b>⚠ ENA·ENB 헤더는 핀이 2개씩</b> 있습니다 (캡을 뺀 자리). 둘 중 하나는 L298N 내부 5V이고, 다른 하나가 ENA/ENB 입력입니다. 보드마다 위치가 달라서 <b>멀티미터로 찾습니다</b>: 전원 ON, 검은 침은 GND 단자, 빨간 침으로 두 핀을 하나씩 재서 <b>약 5V가 나오는 핀이 아닌 쪽</b>에 점퍼선을 꽂습니다 (찾은 뒤 전원 OFF). 5V 핀에 꽂으면 속도 조절이 안 되고 ESP32 핀에 5V가 걸립니다.</div>
   <div class="box info"><b>왜 바로 꽂아도 되나요?</b> ESP32는 3.3V 신호를 내보내고, L298N은 약 2.3V보다 높으면 "켜짐(HIGH)"으로 알아듣습니다. 그래서 전압 변환 없이 바로 이어도 됩니다.</div>
@@ -355,20 +357,20 @@ svg .dot{stroke:var(--card);stroke-width:1.5}
     <tr><th>번호</th><th>시작</th><th>끝</th><th>선</th><th>단계</th></tr>
     <tr><td>P1</td><td>배터리 홀더 빨간 선 (+)</td><td>L298N +12V</td><td>홀더에 달린 선 (빨강)</td><td>4</td></tr>
     <tr><td>P2</td><td>배터리 홀더 검은 선 (−)</td><td>L298N GND</td><td>홀더에 달린 선 (검정)</td><td>4</td></tr>
-    <tr><td>M1</td><td>왼쪽 모터</td><td>L298N OUT1 · OUT2</td><td>모터에 달린 선</td><td>3</td></tr>
-    <tr><td>M2</td><td>오른쪽 모터</td><td>L298N OUT3 · OUT4</td><td>모터에 달린 선</td><td>3</td></tr>
+    <tr><td>M1</td><td>왼쪽 모터</td><td>L298N <b>OUT3 · OUT4</b></td><td>모터에 달린 선</td><td>3</td></tr>
+    <tr><td>M2</td><td>오른쪽 모터</td><td>L298N <b>OUT1 · OUT2</b></td><td>모터에 달린 선</td><td>3</td></tr>
     <tr><td>P3</td><td>L298N +5V</td><td>브레드보드 5V 레일</td><td>수-수 주황</td><td>5</td></tr>
     <tr><td>P4</td><td>L298N GND</td><td>브레드보드 GND 레일</td><td>수-수 검정</td><td>5</td></tr>
     <tr><td>C1</td><td>5V 레일 (+)</td><td>GND 레일 (−)</td><td>470µF</td><td>5</td></tr>
     <tr><td>P5</td><td>5V 레일</td><td>ESP32 5V ⚠USB 시 뽑기</td><td>수-암 주황</td><td>6</td></tr>
     <tr><td>P6</td><td>GND 레일</td><td>ESP32 GND (왼쪽 줄)</td><td>수-암 검정</td><td>6</td></tr>
     <tr><td>S13</td><td>브레드보드 GND 레일</td><td>ESP32 GPIO34 (배터리 측정 안 함)</td><td>수-암 검정</td><td>7</td></tr>
-    <tr><td>S1</td><td>ESP32 GPIO25</td><td>L298N ENA</td><td>암-암</td><td>8</td></tr>
-    <tr><td>S2</td><td>ESP32 GPIO26</td><td>L298N IN1</td><td>암-암</td><td>8</td></tr>
-    <tr><td>S3</td><td>ESP32 GPIO27</td><td>L298N IN2</td><td>암-암</td><td>8</td></tr>
-    <tr><td>S4</td><td>ESP32 GPIO13</td><td>L298N ENB</td><td>암-암</td><td>8</td></tr>
-    <tr><td>S5</td><td>ESP32 GPIO32</td><td>L298N IN3</td><td>암-암</td><td>8</td></tr>
-    <tr><td>S6</td><td>ESP32 GPIO33</td><td>L298N IN4</td><td>암-암</td><td>8</td></tr>
+    <tr><td>S1</td><td>ESP32 GPIO25</td><td>L298N ENA (오른쪽 모터 속도)</td><td>암-암</td><td>8</td></tr>
+    <tr><td>S2</td><td>ESP32 GPIO26</td><td>L298N IN1 (오른쪽 모터 방향)</td><td>암-암</td><td>8</td></tr>
+    <tr><td>S3</td><td>ESP32 GPIO27</td><td>L298N IN2 (오른쪽 모터 방향)</td><td>암-암</td><td>8</td></tr>
+    <tr><td>S4</td><td>ESP32 GPIO13</td><td>L298N ENB (왼쪽 모터 속도)</td><td>암-암</td><td>8</td></tr>
+    <tr><td>S5</td><td>ESP32 GPIO32</td><td>L298N IN3 (왼쪽 모터 방향)</td><td>암-암</td><td>8</td></tr>
+    <tr><td>S6</td><td>ESP32 GPIO33</td><td>L298N IN4 (왼쪽 모터 방향)</td><td>암-암</td><td>8</td></tr>
     <tr><td>S10~S12</td><td>ESP32 GPIO21 · 22 · 23</td><td>LED 모듈 R · G · B</td><td>암-암</td><td>10</td></tr>
     <tr><td>—</td><td>ESP32 GND (오른쪽 줄 맨 위)</td><td>LED 모듈 −</td><td>암-암</td><td>10</td></tr>
     <tr><td>H1</td><td>ESP32 3V3 (도주차만)</td><td>KY-024 +</td><td>암-암</td><td>11</td></tr>
@@ -390,9 +392,10 @@ svg .dot{stroke:var(--card);stroke-width:1.5}
     <tr><td>선·홀더가 뜨거움, 타는 냄새</td><td><b>바로 배터리를 뺍니다.</b> 빨간 선(+)과 검은 선(−)이 닿았는지 (퓨즈가 없어서 위험) · 나사 단자 밖으로 구리가 보이는지</td></tr>
     <tr><td>L298N +5V 단자가 0V</td><td>5V 점퍼가 빠졌는지 (1단계)</td></tr>
     <tr><td>ESP32 LED가 안 켜짐</td><td>P5가 5V 핀에 있는지 · P6 · 레일 전압</td></tr>
-    <tr><td>한쪽 모터만 안 돔</td><td>그쪽 EN 선이 5V 핀이 아닌 입력 핀에 있는지(5V 핀이면 늘 최고 속도) · OUT 단자 나사 · 모터 납땜</td></tr>
+    <tr><td>한쪽 모터만 안 돔</td><td>그쪽 EN 선(왼쪽 모터 = ENB, 오른쪽 모터 = ENA)이 5V 핀이 아닌 입력 핀에 있는지(5V 핀이면 늘 최고 속도) · OUT 단자 나사(왼쪽 = OUT3·OUT4, 오른쪽 = OUT1·OUT2) · 모터 납땜</td></tr>
     <tr><td>모터가 늘 최고 속도로만 돔</td><td>ENA/ENB 캡이 아직 끼워져 있음</td></tr>
     <tr><td>모터가 반대로 돔</td><td>정상. 펌웨어 설정(방향 반전)으로 고치거나 OUT 단자 두 선을 바꿈</td></tr>
+    <tr><td>왼쪽으로 밀면 오른쪽으로 돎 (좌우가 거꾸로)</td><td>모터선을 좌우 바꿔 꽂음 — 왼쪽 모터가 OUT3·OUT4, 오른쪽 모터가 OUT1·OUT2인지 (3단계). 두 모터 선을 맞게 다시 꽂습니다</td></tr>
     <tr><td>출발하거나 방향을 바꿀 때 ESP32가 재부팅</td><td>470µF 극성·위치 · 배터리 잔량(7V 미만?) · 펌웨어의 부드러운 가속 · 그래도 잦으면 모터 잡음 (이번 구성은 모터 노이즈 캡이 없음 — 팀장과 상의)</td></tr>
     <tr><td>L298N 방열판이 따뜻함</td><td>정상 (L298N은 원래 열이 남). 손을 3초도 못 댈 만큼 뜨거우면 끄고 모터가 막혀 있는지 확인</td></tr>
     <tr><td>켜고 몇 초 뒤 차가 멈춤 · 배터리 경고가 뜸</td><td>GPIO34가 GND 레일에 꽂혀 있는지 (S13, 7단계). 비어 있으면 "배터리 바닥"으로 착각합니다</td></tr>
@@ -403,7 +406,7 @@ svg .dot{stroke:var(--card);stroke-width:1.5}
   </table></div>
 </section>
 
-<p style="color:var(--muted);font-size:13px;text-align:center">RC카 L298N 배선 가이드 · 2026-10-26 (퓨즈·스위치·저항·초음파 없는 구성) · 2026-10-17 (KY-024 · 자석 추가) · 4대 공통 · 이 문서의 핀 번호는 펌웨어(<code>config.h</code>)와 같아야 합니다</p>
+<p style="color:var(--muted);font-size:13px;text-align:center">RC카 L298N 배선 가이드 · 2026-10-27 (왼쪽 모터 OUT3·OUT4, 오른쪽 모터 OUT1·OUT2 — 실제 배선에 맞춤) · 2026-10-26 (퓨즈·스위치·저항·초음파 없는 구성) · 2026-10-17 (KY-024 · 자석 추가) · 4대 공통 · 이 문서의 핀 번호는 펌웨어(<code>config.h</code>)와 같아야 합니다</p>
 </main>
 
 <script>
@@ -526,8 +529,8 @@ function breadboard(p,x,y,w,h,gy,vy){
   function box(x,y,w,h,t1,t2,fill){el('rect',{x:x,y:y,width:w,height:h,rx:10,fill:fill,stroke:'#1f2328','stroke-width':2},s);tx(s,x+w/2,y+h/2-(t2?4:-5),t1,{'text-anchor':'middle','font-size':15,'font-weight':700,style:'fill:#1f2328'});if(t2)tx(s,x+w/2,y+h/2+16,t2,{'text-anchor':'middle','font-size':11,style:'fill:#1f2328'});}
   box(20,130,140,70,'18650 ×2','7.4V (6.0~8.4V)','#7dd3a8');
   box(500,110,190,110,'L298N','모터 드라이버 + 5V 레귤레이터','#f28b82');
-  box(780,20,190,60,'왼쪽 모터','OUT1 · OUT2','#f5c400');
-  box(780,100,190,60,'오른쪽 모터','OUT3 · OUT4','#f5c400');
+  box(780,20,190,60,'왼쪽 모터','OUT3 · OUT4','#f5c400');
+  box(780,100,190,60,'오른쪽 모터','OUT1 · OUT2','#f5c400');
   box(500,262,190,60,'브레드보드 레일','5V · GND · 470µF','#f3efe4');
   box(780,190,190,80,'ESP32','DevKitC V4','#9ec5fe');
   box(780,286,190,40,'LED · 홀 센서(도주차)','','#e9d5ff');
@@ -609,19 +612,21 @@ function breadboard(p,x,y,w,h,gy,vy){
 /* ---------- 그림 2: 모터 ---------- */
 (function(){
   const s=document.getElementById('fig2');
-  const P=l298n(s,350,60,{jump5:true});
-  const A=motor(s,40,135,'L','왼쪽 모터');
-  const B=motor(s,810,135,'R','오른쪽 모터');
-  wire(s,'M'+A.t1[0]+' '+A.t1[1]+' H300 V'+P.out1[1]+' H'+P.out1[0],'bat',4);
-  wire(s,'M'+A.t2[0]+' '+A.t2[1]+' H285 V'+P.out2[1]+' H'+P.out2[0],'gnd',4);
-  wire(s,'M'+B.t1[0]+' '+B.t1[1]+' H700 V'+P.out3[1]+' H'+P.out3[0],'bat',4);
-  wire(s,'M'+B.t2[0]+' '+B.t2[1]+' H715 V'+P.out4[1]+' H'+P.out4[0],'gnd',4);
-  tx(s,195,300,'모터에 달린 선 2가닥 → OUT1 · OUT2',{'text-anchor':'middle','font-size':11,class:'mut'});
-  tx(s,805,300,'모터에 달린 선 2가닥 → OUT3 · OUT4',{'text-anchor':'middle','font-size':11,class:'mut'});
+  // 왼쪽 모터(M1) → OUT3·OUT4 (보드 위로 넘어감), 오른쪽 모터(M2) → OUT1·OUT2 (보드 아래로 돌아감)
+  const P=l298n(s,350,100,{jump5:true});
+  const A=motor(s,40,175,'L','왼쪽 모터');
+  const B=motor(s,810,175,'R','오른쪽 모터');
+  wire(s,'M'+A.t1[0]+' '+A.t1[1]+' H275 V62 H690 V'+P.out4[1]+' H'+P.out4[0],'bat',4);
+  wire(s,'M'+A.t2[0]+' '+A.t2[1]+' H290 V76 H672 V'+P.out3[1]+' H'+P.out3[0],'gnd',4);
+  wire(s,'M'+B.t1[0]+' '+B.t1[1]+' H715 V338 H322 V'+P.out2[1]+' H'+P.out2[0],'bat',4);
+  wire(s,'M'+B.t2[0]+' '+B.t2[1]+' H735 V352 H305 V'+P.out1[1]+' H'+P.out1[0],'gnd',4);
+  tx(s,300,54,'M1  왼쪽 모터 → OUT3 · OUT4',{'font-size':12,'font-weight':700});
+  tx(s,520,372,'M2  오른쪽 모터 → OUT1 · OUT2',{'text-anchor':'middle','font-size':12,'font-weight':700});
+  tx(s,128,312,'M1 · 선 2가닥 → OUT3 · OUT4',{'text-anchor':'middle','font-size':11,class:'mut'});
+  tx(s,872,312,'M2 · 선 2가닥 → OUT1 · OUT2',{'text-anchor':'middle','font-size':11,class:'mut'});
   wire(s,'M500 40 V12','',3,'#16a34a');el('path',{d:'M492 20 L500 6 L508 20 Z',fill:'#16a34a'},s);
   tx(s,512,22,'차 앞쪽',{'font-size':12,'font-weight':700,style:'fill:#16a34a'});
-  tx(s,265,128,'M1',{'font-size':12,'font-weight':700});tx(s,735,128,'M2',{'font-size':12,'font-weight':700,'text-anchor':'end'});
-  tx(s,500,330,'선 색(빨강/검정)은 어느 쪽에 물려도 됩니다 — 방향은 펌웨어에서 맞춥니다',{'text-anchor':'middle','font-size':11,class:'mut'});
+  tx(s,500,405,'선 색(빨강/검정)은 어느 쪽에 물려도 됩니다 — 방향은 펌웨어에서 맞춥니다',{'text-anchor':'middle','font-size':11,class:'mut'});
 })();
 
 /* ---------- 그림 3: 신호선 ---------- */
@@ -639,6 +644,7 @@ function breadboard(p,x,y,w,h,gy,vy){
   });
   tx(s,190,26,'ENA·ENB: 2개 핀 중 5V가 아닌 쪽에 꽂기 (8단계)',{'text-anchor':'middle','font-size':11,'font-weight':700,style:'fill:#d92d20'});
   tx(s,40,470,'모든 선이 ESP32 왼쪽 줄로 갑니다. 암-암 점퍼선 6개.',{'font-size':12,class:'mut'});
+  tx(s,40,490,'ENA · IN1 · IN2 = 오른쪽 모터 (OUT1 · OUT2)   ·   IN3 · IN4 · ENB = 왼쪽 모터 (OUT3 · OUT4)',{'font-size':12,'font-weight':700});
 })();
 
 /* ---------- 그림 4: LED ---------- */

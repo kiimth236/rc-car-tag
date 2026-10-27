@@ -27,8 +27,8 @@
 #include "web_proto.h"
 
 static CarSettings S;
-static L298NMotor motorL(cfg::PIN_ENA, cfg::PIN_IN1, cfg::PIN_IN2, cfg::CH_MOTOR_L);
-static L298NMotor motorR(cfg::PIN_ENB, cfg::PIN_IN3, cfg::PIN_IN4, cfg::CH_MOTOR_R);
+static L298NMotor motorL(cfg::PIN_L_EN, cfg::PIN_L_A, cfg::PIN_L_B, cfg::CH_MOTOR_L);  // OUT3·OUT4
+static L298NMotor motorR(cfg::PIN_R_EN, cfg::PIN_R_A, cfg::PIN_R_B, cfg::CH_MOTOR_R);  // OUT1·OUT2
 static Drive drive(motorL, motorR);
 static rcar::BatteryMonitor battery;
 static uint8_t battDeciV = 0;

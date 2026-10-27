@@ -44,12 +44,13 @@ constexpr uint32_t RAMP_MS = 200;
 constexpr float    V_FULL = 8.4f, V_WARN = 6.8f, V_STOP = 6.4f;
 
 CarSettings S;                                // NVS "rcar" 설정
-L298NMotor motorL(cfg::PIN_ENA, cfg::PIN_IN1, cfg::PIN_IN2, cfg::CH_MOTOR_L);
-L298NMotor motorR(cfg::PIN_ENB, cfg::PIN_IN3, cfg::PIN_IN4, cfg::CH_MOTOR_R);
+L298NMotor motorL(cfg::PIN_L_EN, cfg::PIN_L_A, cfg::PIN_L_B, cfg::CH_MOTOR_L);  // OUT3·OUT4
+L298NMotor motorR(cfg::PIN_R_EN, cfg::PIN_R_A, cfg::PIN_R_B, cfg::CH_MOTOR_R);  // OUT1·OUT2
 
-struct MotorRef { L298NMotor* m; const char* name; bool left; };
-MotorRef refL{&motorL, "왼쪽", true};
-MotorRef refR{&motorR, "오른쪽", false};
+// where = 이 모터가 꽂힌 L298N 단자와 신호 핀 (rcar_config.h 의 PIN_L_* / PIN_R_* 와 같아야 함)
+struct MotorRef { L298NMotor* m; const char* name; bool left; const char* where; };
+MotorRef refL{&motorL, "왼쪽", true,  "OUT3·OUT4, 신호 ENB·IN3·IN4"};
+MotorRef refR{&motorR, "오른쪽", false, "OUT1·OUT2, 신호 ENA·IN1·IN2"};
 
 // ============================ LED · 핀 준비 · 설정 ============================
 void ledColor(uint8_t r, uint8_t g, uint8_t b) { ledWrite({r, g, b}); }
@@ -361,7 +362,7 @@ void cmdDirection() {
   MotorRef* motors[] = {&refL, &refR};
   for (MotorRef* m : motors) {
     bool isLeft = m->left;
-    Serial.printf("\n--- %s 모터: 전진 1.5초 (이 바퀴만) ---\n", m->name);
+    Serial.printf("\n--- %s 모터 (L298N %s): 전진 1.5초 (이 바퀴만) ---\n", m->name, m->where);
     Serial.println("  차의 '앞쪽'으로 굴러가는 방향이면 정상입니다. (중간에 아무 글자 + Enter = 즉시 정지)");
     if (!(isLeft ? driveFor(DUTY_TEST, 0, 1500) : driveFor(0, DUTY_TEST, 1500))) return;
     delay(300);
@@ -374,7 +375,8 @@ void cmdDirection() {
       changed = true;
       Serial.printf("  → %s 모터 방향 반전을 %s 로 저장했습니다. (OUT 단자 두 선을 바꿔 물려도 됩니다)\n", m->name, inv ? "켬" : "끔");
     } else if (c == 3) {
-      Serial.println("  → 안 돌면 확인: ① ENA/ENB 선이 5V 핀이 아닌 입력 핀에 있나 (배선 가이드 8단계) ② ENA/ENB 캡을 뺐나");
+      Serial.printf("  → 안 돌면 확인 (이 모터 = L298N %s):\n", m->where);
+      Serial.println("                  ① ENA/ENB 선이 5V 핀이 아닌 입력 핀에 있나 (배선 가이드 8단계) ② ENA/ENB 캡을 뺐나");
       Serial.println("                  ③ L298N +12V 에 배터리 전압 ④ OUT 단자 나사 · 모터 납땜 ⑤ 듀티가 너무 낮은지 (n)");
       continue;
     } else if (c == 0) {
@@ -386,7 +388,7 @@ void cmdDirection() {
     if (!(isLeft ? driveFor(-DUTY_TEST, 0, 1500) : driveFor(0, -DUTY_TEST, 1500))) return;
     delay(300);
     if (!askYesNo("  전진과 반대 방향으로 돌았나요?")) {
-      Serial.println("  → 후진이 안 되면 그 모터의 IN2/IN4 또는 IN1/IN3 선 연결을 확인하세요.");
+      Serial.printf("  → 후진이 안 되면 그 모터의 IN 선 두 개 (L298N %s) 연결을 확인하세요.\n", m->where);
     }
   }
   allStop();
@@ -401,7 +403,7 @@ void cmdMinDuty() {
   MotorRef* motors[] = {&refL, &refR};
   for (MotorRef* m : motors) {
     bool isLeft = m->left;
-    Serial.printf("\n--- %s 모터 --- (돌기 시작하면 Enter)\n", m->name);
+    Serial.printf("\n--- %s 모터 (L298N %s) --- (돌기 시작하면 Enter)\n", m->name, m->where);
     int found = -1;
     for (int duty = 30; duty <= 150; duty += 5) {
       m->m->set(duty);
@@ -485,12 +487,13 @@ void cmdStall() {
 void cmdPins() {
   struct PinStep { const char* gpio; const char* target; uint8_t pin; int8_t ch; };
   const PinStep list[] = {
-    {"GPIO25", "L298N ENA (왼쪽 속도)", cfg::PIN_ENA, (int8_t)cfg::CH_MOTOR_L},
-    {"GPIO26", "L298N IN1 (왼쪽 방향)", cfg::PIN_IN1, -1},
-    {"GPIO27", "L298N IN2 (왼쪽 방향)", cfg::PIN_IN2, -1},
-    {"GPIO13", "L298N ENB (오른쪽 속도)", cfg::PIN_ENB, (int8_t)cfg::CH_MOTOR_R},
-    {"GPIO32", "L298N IN3 (오른쪽 방향)", cfg::PIN_IN3, -1},
-    {"GPIO33", "L298N IN4 (오른쪽 방향)", cfg::PIN_IN4, -1},
+    // ENA 는 오른쪽 모터(motorR = CH_MOTOR_R), ENB 는 왼쪽 모터(motorL = CH_MOTOR_L) 의 PWM 채널에 붙어 있음
+    {"GPIO25", "L298N ENA (오른쪽 모터 속도)", cfg::PIN_ENA, (int8_t)cfg::CH_MOTOR_R},
+    {"GPIO26", "L298N IN1 (오른쪽 모터 방향)", cfg::PIN_IN1, -1},
+    {"GPIO27", "L298N IN2 (오른쪽 모터 방향)", cfg::PIN_IN2, -1},
+    {"GPIO13", "L298N ENB (왼쪽 모터 속도)", cfg::PIN_ENB, (int8_t)cfg::CH_MOTOR_L},
+    {"GPIO32", "L298N IN3 (왼쪽 모터 방향)", cfg::PIN_IN3, -1},
+    {"GPIO33", "L298N IN4 (왼쪽 모터 방향)", cfg::PIN_IN4, -1},
     // "초음파 Trig (센서를 안 단 구성이면 재지 말고 Enter)"
     {"GPIO18", "\xEC\xB4\x88\xEC\x9D\x8C\xED\x8C\x8C Trig (\xEC\x84\xBC\xEC\x84\x9C\xEB\xA5\xBC \xEC\x95\x88 \xEB\x8B\xA8 \xEA\xB5\xAC\xEC\x84\xB1\xEC\x9D\xB4\xEB\xA9\xB4 \xEC\x9E\xAC\xEC\xA7\x80 \xEB\xA7\x90\xEA\xB3\xA0 Enter)", cfg::PIN_TRIG, -1},
   };

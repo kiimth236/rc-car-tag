@@ -3,9 +3,13 @@
 
 // 핀과 설정 상수 — 배선 가이드(rc-car-l298n-wiring.html) 전체 연결표와 같아야 합니다.
 namespace cfg {
-// L298N
-constexpr uint8_t PIN_ENA = 25, PIN_IN1 = 26, PIN_IN2 = 27;  // 왼쪽 모터 (ENA = PWM)
-constexpr uint8_t PIN_ENB = 13, PIN_IN3 = 32, PIN_IN4 = 33;  // 오른쪽 모터 (ENB = PWM)
+// L298N — 어느 GPIO 가 L298N 의 어느 핀에 꽂히는지 (배선 가이드 8단계)
+constexpr uint8_t PIN_ENA = 25, PIN_IN1 = 26, PIN_IN2 = 27;  // ENA(PWM)·IN1·IN2 → OUT1·OUT2 를 움직임
+constexpr uint8_t PIN_ENB = 13, PIN_IN3 = 32, PIN_IN4 = 33;  // ENB(PWM)·IN3·IN4 → OUT3·OUT4 를 움직임
+// 왼쪽 모터는 OUT3·OUT4, 오른쪽 모터는 OUT1·OUT2 에 꽂음 (팀 공통, 배선 가이드 3단계)
+// — 반대로 꽂으면 여기서 L/R 을 바꾸면 됨.
+constexpr uint8_t PIN_L_EN = PIN_ENB, PIN_L_A = PIN_IN3, PIN_L_B = PIN_IN4;  // 왼쪽 모터
+constexpr uint8_t PIN_R_EN = PIN_ENA, PIN_R_A = PIN_IN1, PIN_R_B = PIN_IN2;  // 오른쪽 모터
 // 센서 · LED
 constexpr uint8_t PIN_TRIG = 18, PIN_ECHO = 19;             // 초음파 (Echo 는 1k/2k 분압 뒤)
 constexpr uint8_t PIN_LED_R = 21, PIN_LED_G = 22, PIN_LED_B = 23;
